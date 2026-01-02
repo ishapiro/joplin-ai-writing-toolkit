@@ -149,6 +149,15 @@ joplin.plugins.register({
         },
       });
 
+      // Insert Note Block
+      await joplin.commands.register({
+        name: 'insertNoteBlock',
+        label: 'Insert Note Block',
+        execute: async () => {
+          await joplin.commands.execute('replaceSelection', '\n```note\n\n```\n');
+        },
+      });
+
       // 6. Handle Webview Messages
       await joplin.views.panels.onMessage(panel, async (message: any) => {
         return await handler.handleMessage(message);
@@ -161,6 +170,7 @@ joplin.plugins.register({
       try {
         await joplin.views.menuItems.create('com.cogitations.ai-writing-toolkit.menu.open', 'openChatGPTPanel', MenuItemLocation.Tools);
         await joplin.views.menuItems.create('com.cogitations.ai-writing-toolkit.menu.prompt', 'openSystemPromptFile', MenuItemLocation.Tools);
+        await joplin.views.menuItems.create('com.cogitations.ai-writing-toolkit.menu.insertNoteBlock', 'insertNoteBlock', MenuItemLocation.Edit, { accelerator: 'CmdOrCtrl+Shift+3' });
         console.info('AI Writing Toolkit menu items added to Tools menu');
       } catch (error: any) {
         console.warn('Could not add menu items (may not be supported in this Joplin version):', error.message);
@@ -170,6 +180,7 @@ joplin.plugins.register({
       console.info('1. Tools menu -> AI Writing Toolkit (if available)');
       console.info('2. Command Palette: Ctrl+Shift+P (or Cmd+Shift+P) -> "Open AI Writing Toolkit Panel"');
       console.info('3. Command Palette: Ctrl+Shift+P (or Cmd+Shift+P) -> "Toggle AI Writing Toolkit"');
+      console.info('4. Insert Note Block: Ctrl+Shift+3 (or Cmd+Shift+3)');
       
       console.info('AI Writing Toolkit Plugin initialized successfully!');
       
