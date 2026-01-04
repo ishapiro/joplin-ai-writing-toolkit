@@ -74,7 +74,7 @@ export async function registerPluginSettings(): Promise<void> {
   }
   
   // Create a settings section so options appear in Joplin's UI
-  const pluginVersion = '1.0.0';
+  const pluginVersion = 'Beta 1.0';
   const loadTimestamp = new Date().toLocaleString();
   await joplin.settings.registerSection('chatgptToolkit', {
     label: 'AI Writing Toolkit',

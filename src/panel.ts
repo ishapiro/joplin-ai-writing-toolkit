@@ -4,7 +4,6 @@ export function getPanelHtml(modelOptions: string): string {
     <div class="chat-container">
       <div class="chat-header">
         <h3>AI Writing Tools</h3>
-        <button class="close-button" id="closePanelButton" title="Close Panel">✕</button>
       </div>
       
       <div class="model-selector-container">
@@ -28,8 +27,8 @@ export function getPanelHtml(modelOptions: string): string {
       <div class="chat-messages" id="chatMessages">
         <div class="message assistant">
           <div class="message-content">
-            <strong>🤖 AI Writing Tools v1.0.0</strong><br><br>
-            Click <strong>HELP</strong> to learn about AI Writing Tools v1.0.0 features.
+            <strong>🤖 AI Writing Tools Beta 1.0</strong><br><br>
+            Click <strong>HELP</strong> to learn about AI Writing Tools Beta 1.0 features.
           </div>
         </div>
       </div>
@@ -47,6 +46,7 @@ export function getPanelHtml(modelOptions: string): string {
         ></textarea>
       </div>
       <div class="send-button-container">
+        <button class="close-panel-button" id="closePanelButton">Close</button>
         <button class="clear-history-button" id="clearHistoryButton">Clear History</button>
         <button class="send-button" id="sendButton">Send</button>
       </div>
@@ -93,26 +93,6 @@ export function getPanelHtml(modelOptions: string): string {
         font-size: 18px;
         font-weight: 600;
         letter-spacing: -0.01em;
-      }
-
-      .close-button {
-        background: transparent;
-        color: #666666;
-        border: none;
-        font-size: 18px;
-        cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 4px;
-        transition: all 0.2s ease;
-      }
-
-      .close-button:hover {
-        background: rgba(0, 0, 0, 0.1);
-        color: #333333;
-      }
-
-      .close-button:active {
-        background: rgba(0, 0, 0, 0.2);
       }
 
       .model-selector-container {
@@ -380,6 +360,7 @@ export function getPanelHtml(modelOptions: string): string {
       .send-button-container {
         display: flex;
         justify-content: space-between;
+        gap: 10px;
         padding: 0 16px 16px;
         background: #ffffff;
       }
@@ -412,7 +393,7 @@ export function getPanelHtml(modelOptions: string): string {
         transform: none;
       }
 
-      .clear-history-button {
+      .close-panel-button, .clear-history-button {
         padding: 8px 16px;
         background: transparent;
         color: #666;
@@ -423,7 +404,7 @@ export function getPanelHtml(modelOptions: string): string {
         transition: all 0.2s;
       }
 
-      .clear-history-button:hover {
+      .close-panel-button:hover, .clear-history-button:hover {
         background: #f5f5f5;
         color: #333;
         border-color: #999;

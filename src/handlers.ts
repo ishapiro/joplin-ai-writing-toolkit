@@ -143,7 +143,7 @@ export class PanelHandler {
           await joplin.views.panels.postMessage(this.panel, {
             type: 'addMessage',
             sender: 'assistant',
-            content: `<strong>🤖 AI Writing Toolkit v1.0.0 - Help & Features</strong><br><br>
+            content: `<strong>🤖 AI Writing Toolkit Beta 1.0 - Help & Features</strong><br><br>
 <strong>📋 Action Buttons:</strong><br>
 • <strong>📝 Append</strong> - Appends the AI response to the end of the current note<br>
 • <strong>🔄 Replace</strong> - Replaces the entire current note with the AI response<br>
@@ -178,7 +178,7 @@ export class PanelHandler {
 • <a href="https://joplinapp.org/plugins/" target="_blank">Joplin Plugin Forum</a> - Community support<br><br>
 <strong>👨‍💻 Developer:</strong> Irv Shapiro / Cogitations, LLC<br>
 <strong>📄 License:</strong> MIT License<br>
-<strong>🏷️ Version:</strong> 1.0.0<br>
+            <strong>🏷️ Version:</strong> Beta 1.0<br>
 <strong>🏢 Learn about Cogitations, LLC:</strong> <a href="https://cogitations.com" target="_blank">https://cogitations.com</a><br><br>
 <em>Thank you for using AI Writing Toolkit! ⭐ Star the repo if you find it helpful!</em>`
           });

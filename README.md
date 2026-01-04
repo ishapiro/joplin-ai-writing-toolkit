@@ -25,13 +25,14 @@ While currently focused on AI assistance and drafting tools, the roadmap include
     
     ```
 
-### 🔮 Roadmap: PDF Publishing
-Future updates will introduce a robust PDF publishing engine allowing you to turn your Markdown drafts into professional documents with:
-- Custom Title Pages
-- Headers & Footers
-- Page Numbers
-- Logo Integration
-- Advanced Layout Controls
+### 📄 PDF Publishing Settings
+Configure how your documents will be formatted when exported to PDF. All settings are stored in YAML Front Matter at the top of your notes, allowing you to customize each document individually:
+- **Title Page**: Set document title, subtitle, author, date, and logo
+- **Layout & Margins**: Choose page size (Letter/A4) and margin settings
+- **Headers & Footers**: Add custom header and footer text with page numbers
+- **Front Matter Integration**: Settings automatically sync between the panel and your note's Front Matter
+
+See the [PDF Publishing](#pdf-publishing) section below for detailed instructions.
 
 ## Usage
 
@@ -60,6 +61,91 @@ The Chat Panel includes a set of quick-action buttons to streamline your workflo
 | **Check Grammar** | Checks selected text for errors. | Select text -> Command Palette |
 | **Insert Note Block** | Inserts a `note` code block. | `Ctrl+Shift+3` / `Cmd+Shift+3` |
 | **Open System Prompt** | Edit the AI's instructions. | Command Palette -> "Open System Prompt File" |
+| **PDF Publishing Settings** | Configure PDF export settings. | `Tools > Cogitations Plugins > PDF Publishing Settings` |
+
+## PDF Publishing
+
+### Overview
+The PDF Publishing Settings panel allows you to configure how your notes will be formatted when exported to PDF. All settings are stored as **YAML Front Matter** at the top of your notes, making it easy to customize each document individually.
+
+### Accessing PDF Publishing Settings
+- **Menu**: `Tools > Cogitations Plugins > PDF Publishing Settings`
+- **Command Palette**: Press `Ctrl+Shift+P` (or `Cmd+Shift+P`) and search "PDF Publishing Settings"
+
+### Front Matter Explained
+**Front Matter** is a YAML block placed at the very beginning of your note, wrapped between `---` markers. The plugin uses this block to store PDF publishing configuration.
+
+**Example:**
+```yaml
+---
+title: My Document Title
+subtitle: A compelling subtitle
+author: Your Name
+date: 2024-01-15
+logo: https://example.com/logo.png
+page_size: Letter
+margin: 2.5
+header: Document Header Text
+footer: Document Footer Text
+show_page_numbers: true
+---
+
+Your note content starts here...
+```
+
+### How Front Matter Works
+1. **Two-Way Sync**: Changes made in the PDF Publishing Settings panel automatically update the Front Matter in your note, and vice versa. This means you can:
+   - Edit settings in the panel → Front Matter updates automatically
+   - Edit Front Matter directly in your note → Click "Refresh from Note" to sync the panel
+
+2. **Automatic Updates**: When you change a field in the PDF Publishing Settings panel, the Front Matter in your current note is updated after a brief delay (debounced to avoid excessive updates).
+
+3. **Note-Specific Settings**: Each note can have its own Front Matter, so different documents can have different formatting settings.
+
+4. **Default Values**: If a setting is not specified in Front Matter, the panel will use sensible defaults:
+   - Page Size: Letter
+   - Margin: 2.5cm
+   - Show Page Numbers: true
+
+### PDF Publishing Settings Panel
+
+The panel includes three main sections:
+
+#### Title Page
+- **Document Title**: The main title (defaults to note title if not specified)
+- **Subtitle**: Optional subtitle text
+- **Author**: Document author name
+- **Date**: Publication or document date
+- **Logo URL/Path**: URL or resource ID for a logo image
+
+#### Layout & Margins
+- **Page Size**: Choose between Letter (8.5" × 11") or A4 (210mm × 297mm)
+- **Margin**: Page margin in centimeters
+
+#### Header & Footer
+- **Header Text**: Text to appear at the top of each page
+- **Footer Text**: Text to appear at the bottom of each page
+- **Show Page Numbers**: Toggle page number display in the footer
+
+### Panel Actions
+
+| Button | Action |
+|--------|--------|
+| **Refresh from Note** | Reloads all settings from the current note's Front Matter. Use this if you've edited Front Matter directly in your note. |
+| **Generate Preview** | *(Coming soon)* Generates a preview of how your document will look as a PDF. |
+
+### Best Practices
+
+1. **Edit in the Panel**: For most users, editing settings in the PDF Publishing Settings panel is recommended, as it provides a user-friendly interface and ensures valid YAML syntax.
+
+2. **Edit Front Matter Directly**: Advanced users can edit Front Matter directly in their notes. Remember to:
+   - Keep valid YAML syntax (use `:` after keys, proper indentation)
+   - Use `---` markers at the beginning and end
+   - Click "Refresh from Note" in the panel to sync changes
+
+3. **Consistent Formatting**: If you want consistent settings across multiple notes, consider:
+   - Creating a template note with Front Matter already configured
+   - Copying the Front Matter block when creating new documents
 
 ## Configuration
 1. Go to **Tools > Options > AI Writing Toolkit** (or **Joplin > Settings** on macOS).

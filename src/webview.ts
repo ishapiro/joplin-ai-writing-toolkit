@@ -1,5 +1,5 @@
 // AI Writing Toolkit webview script - Real ChatGPT integration
-declare const webviewApi: any;
+// declare const webviewApi: any; // Handled globally via window
 
 // Hack to fix "exports is not defined" error if webpack adds commonjs exports
 (window as any).exports = {};
@@ -348,9 +348,9 @@ declare const webviewApi: any;
     messageDiv.innerHTML = `
       <p style="color: #495057; font-size: 14px; margin-bottom: 15px;">To reopen this panel:</p>
       <div style="color: #495057; font-size: 13px; line-height: 1.4; margin-bottom: 15px;">
-        <strong>1.</strong> Press Ctrl+Shift+P (or Cmd+Shift+P on Mac)<br>
-        <strong>2.</strong> Type "Open AI Writing Toolkit Panel"<br>
-        <strong>3.</strong> Press Enter
+        <strong>1.</strong> Select <strong>Tools</strong> from the menu bar<br>
+        <strong>2.</strong> Click <strong>Cogitations Plugins</strong><br>
+        <strong>3.</strong> Select <strong>Open Chat Panel</strong>
       </div>
       <div style="display: flex; gap: 10px; justify-content: center;">
         <button id="confirmCloseButton" style="padding: 8px 16px; border: none; border-radius: 4px; font-size: 13px; cursor: pointer; background: #28a745; color: white;">Close Panel</button>

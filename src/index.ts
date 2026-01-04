@@ -2,6 +2,8 @@
 import { ChatGPTAPI, ensureModelsFetchedAndGetOptions } from './api';
 import { registerPluginSettings } from './settings';
 import { getPanelHtml } from './panel';
+import { getPublishingPanelHtml } from './publishing/panel';
+import { parseFrontMatter, updateFrontMatter, webviewToPluginSettings, pluginToWebviewSettings } from './publishing/utils';
 import { PanelHandler } from './handlers';
 import { MenuItemLocation } from './types';
 import { 
@@ -56,6 +58,7 @@ joplin.plugins.register({
         iconName: 'fas fa-robot',
         execute: async () => {
           try {
+            await joplin.views.panels.hide(publishingPanel);
             await joplin.views.panels.show(panel);
             console.info('AI Writing Toolkit panel opened via command');
           } catch (error: any) {
@@ -74,6 +77,7 @@ joplin.plugins.register({
             if (isVisible) {
               await joplin.views.panels.hide(panel);
             } else {
+              await joplin.views.panels.hide(publishingPanel);
               await joplin.views.panels.show(panel);
             }
           } catch (error: any) {
@@ -166,11 +170,102 @@ joplin.plugins.register({
       console.info('ChatGPT chat panel created successfully!');
       console.info('ChatGPT commands initialized.');
 
+      // --- Publishing Panel Setup ---
+      const publishingPanelId = 'publishing.panel';
+      const publishingPanel = await joplin.views.panels.create(publishingPanelId);
+      await joplin.views.panels.setHtml(publishingPanel, getPublishingPanelHtml());
+      await joplin.views.panels.addScript(publishingPanel, './publishing/webview.js');
+
+      // Open Publishing Panel Command
+      await joplin.commands.register({
+        name: 'openPublishingPanel',
+        label: 'PDF Publishing Settings',
+        iconName: 'fas fa-print',
+        execute: async () => {
+           await joplin.views.panels.hide(panel);
+           await joplin.views.panels.show(publishingPanel);
+           
+           // Load current note metadata after a short delay to ensure webview is ready
+           setTimeout(async () => {
+             try {
+               const note = await getCurrentNote();
+               const settings = parseFrontMatter(note.body);
+               const webviewSettings = pluginToWebviewSettings(settings);
+               await joplin.views.panels.postMessage(publishingPanel, {
+                 type: 'updatePanelFields',
+                 settings: webviewSettings
+               });
+             } catch (error) {
+               console.error('Error loading note metadata:', error);
+             }
+           }, 100);
+        },
+      });
+
+      // Handle Publishing Panel Messages
+      await joplin.views.panels.onMessage(publishingPanel, async (message: any) => {
+        if (message.type === 'closePublishingPanel') {
+          await joplin.views.panels.hide(publishingPanel);
+        } else if (message.type === 'refreshFromNote') {
+          try {
+            const note = await getCurrentNote();
+            const settings = parseFrontMatter(note.body);
+            const webviewSettings = pluginToWebviewSettings(settings);
+            await joplin.views.panels.postMessage(publishingPanel, {
+              type: 'updatePanelFields',
+              settings: webviewSettings
+            });
+          } catch (error) {
+            console.error('Error refreshing from note:', error);
+            await joplin.views.dialogs.showMessageBox('Error: Could not refresh from current note. Please make sure a note is selected.');
+          }
+        } else if (message.type === 'generatePreview') {
+          console.info('Preview generation requested with settings:', message.settings);
+          // Placeholder for preview generation
+          await joplin.views.dialogs.showMessageBox('Preview generation initiated. Settings captured.');
+        } else if (message.type === 'updateNoteMetadata') {
+          try {
+            const note = await getCurrentNote();
+            const pluginSettings = webviewToPluginSettings(message.settings);
+            const newBody = updateFrontMatter(note.body, pluginSettings);
+            if (newBody !== note.body) {
+               await joplin.data.put(['notes', note.id], null, { body: newBody });
+            }
+          } catch (error) {
+            console.error('Error updating note metadata:', error);
+          }
+        }
+      });
+
+      // Listen for note selection changes to update the panel
+      await joplin.workspace.onNoteSelectionChange(async () => {
+        const isVisible = await joplin.views.panels.visible(publishingPanel);
+        if (isVisible) {
+          try {
+             const note = await getCurrentNote();
+             const settings = parseFrontMatter(note.body);
+             const webviewSettings = pluginToWebviewSettings(settings);
+             await joplin.views.panels.postMessage(publishingPanel, {
+               type: 'updatePanelFields',
+               settings: webviewSettings
+             });
+          } catch (error) {
+             // Ignore error if no note selected
+          }
+        }
+      });
+      // -----------------------------
+
       // 7. Menu Items
       try {
-        await joplin.views.menuItems.create('com.cogitations.ai-writing-toolkit.menu.open', 'openChatGPTPanel', MenuItemLocation.Tools);
-        await joplin.views.menuItems.create('com.cogitations.ai-writing-toolkit.menu.prompt', 'openSystemPromptFile', MenuItemLocation.Tools);
-        await joplin.views.menuItems.create('com.cogitations.ai-writing-toolkit.menu.insertNoteBlock', 'insertNoteBlock', MenuItemLocation.Edit, { accelerator: 'CmdOrCtrl+Shift+3' });
+        // Create a submenu in the Tools menu
+        await joplin.views.menus.create('ai-writing-toolkit-menu', 'Cogitations Plugins', [
+          { commandName: 'openChatGPTPanel', label: 'Open Chat Panel' },
+          { commandName: 'openPublishingPanel', label: 'PDF Publishing Settings' },
+          { commandName: 'openSystemPromptFile', label: 'Edit System Prompt' },
+          { commandName: 'insertNoteBlock', label: 'Insert Note Block', accelerator: 'CmdOrCtrl+Shift+3' },
+        ], MenuItemLocation.Tools);
+        
         console.info('AI Writing Toolkit menu items added to Tools menu');
       } catch (error: any) {
         console.warn('Could not add menu items (may not be supported in this Joplin version):', error.message);
