@@ -9,12 +9,10 @@ export async function registerPluginSettings(): Promise<void> {
   let modelsForSettings: ModelInfo[] = [];
   
   try {
-    console.debug(`[onStart] Reading models from settings cache`);
     const storedModelsStr = await joplin.settings.value('modelCache');
     if (storedModelsStr) {
       modelsForSettings = JSON.parse(storedModelsStr);
       modelsForSettings.sort((a: ModelInfo, b: ModelInfo) => b.created - a.created);
-      console.info('Loaded', modelsForSettings.length, 'models for settings dropdown');
     }
   } catch (e) {
     // Models not in storage yet, will use defaults
@@ -53,14 +51,7 @@ export async function registerPluginSettings(): Promise<void> {
     settingsModelOptions[model.id] = displayName;
   });
   
-  // Debug: Log the options object
-  console.log('=== AI Writing Toolkit Settings Debug ===');
-  console.log('Settings dropdown options:', JSON.stringify(settingsModelOptions, null, 2));
-  console.log('Number of model options:', Object.keys(settingsModelOptions).length);
-  console.log('Models for settings:', modelsForSettings.map(m => m.id).join(', '));
-  
   // ===== SETTINGS SETUP =====
-  console.log('Setting up AI Writing Toolkit settings...');
   
   // Get system prompt file path for default value
   const path = require('path');
@@ -83,12 +74,6 @@ export async function registerPluginSettings(): Promise<void> {
   });
 
   try {
-    console.log('Registering settings with options:', {
-      modelOptionsCount: Object.keys(settingsModelOptions).length,
-      hasOptions: !!settingsModelOptions,
-      optionsKeys: Object.keys(settingsModelOptions).slice(0, 5).join(', ') + '...'
-    });
-    
     await joplin.settings.registerSettings({
       'modelCache': {
         value: '',
@@ -181,12 +166,6 @@ export async function registerPluginSettings(): Promise<void> {
       },
     });
     
-    // Debug: Log settings registration
-    console.log('Settings registered successfully');
-    console.log('Model setting options count:', Object.keys(settingsModelOptions).length);
-    console.log('System prompt file path:', systemPromptFilePath);
-    console.log('=== End Settings Debug ===');
-
     // Update system prompt file path after it's created
     try {
       const chatGPTAPI = new ChatGPTAPI();
@@ -246,7 +225,6 @@ export async function registerPluginSettings(): Promise<void> {
       let modelsToCheck: ModelInfo[] = [];
       
       try {
-        console.debug(`[Default Model Check] Reading models from settings cache`);
         const storedModelsStr = await joplin.settings.value('modelCache');
         if (storedModelsStr) {
           modelsToCheck = JSON.parse(storedModelsStr);
@@ -271,7 +249,6 @@ export async function registerPluginSettings(): Promise<void> {
         if (latestGeneralModel) {
           await joplin.settings.setValue('openaiModel', latestGeneralModel.id);
           await joplin.settings.setValue('openaiModelUserSet', false);
-          console.info('Set default model in settings to:', latestGeneralModel.id);
         }
       } else {
         // Fallback to hardcoded default

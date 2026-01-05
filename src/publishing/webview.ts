@@ -166,7 +166,7 @@
     const pages = document.querySelectorAll('#pageContainer .virtual-page');
     pages.forEach((p) => {
       (p as HTMLElement).style.display = 'block';
-      (p as HTMLElement).style.marginBottom = '20px';
+      (p as HTMLElement).style.marginBottom = '0';
     });
     const holder = document.getElementById('previewContentHolder');
     if (holder) holder.style.transform = 'none';
@@ -200,7 +200,9 @@
     };
 
     let { page, contentArea } = createNewPage();
-    const maxPageHeight = contentArea.offsetHeight || (297 * 3.78) - (5 * 37.8); // fallback: A4 pixels - margins
+    
+    // Use the actual measured height of the content area for precise pagination
+    const maxPageHeight = contentArea.offsetHeight;
 
     for (const child of children) {
       const childClone = child.cloneNode(true) as HTMLElement;
@@ -236,9 +238,10 @@
     const body = document.getElementById('previewBody');
     if (!holder || !body) return;
 
-    // The A4 page width/height in pixels (approx)
-    const pageWidth = 210 * 3.78; 
-    const pageHeight = 297 * 3.78;
+    // Use actual dimensions of the virtual page for scaling
+    const firstPage = document.querySelector('.virtual-page') as HTMLElement;
+    const pageWidth = firstPage ? firstPage.offsetWidth : 210 * 3.78; 
+    const pageHeight = firstPage ? firstPage.offsetHeight : 297 * 3.78;
 
     const padding = 40; 
     const availableWidth = body.offsetWidth - padding;

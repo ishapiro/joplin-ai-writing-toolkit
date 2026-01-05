@@ -55,8 +55,9 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
   const showPageNumbers = settings.showPageNumbers !== false;
 
   const pageSizeCSS = pageSize === 'A4' ? 'A4' : 'letter';
-  // Standard CSS units (1in = 96px, 1cm = 37.8px)
-  const pageHeight = pageSize === 'A4' ? '29.7cm' : '11in';
+  // Standard CSS dimensions
+  const pageWidth = pageSize === 'A4' ? '210mm' : '8.5in';
+  const pageHeight = pageSize === 'A4' ? '297mm' : '11in';
 
   return `<!DOCTYPE html>
 <html>
@@ -65,7 +66,7 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
   <style>
     @page {
       size: ${pageSizeCSS};
-      margin: ${margin}cm;
+      margin: 0; /* Let virtual-page padding handle margins */
     }
     body {
       margin: 0;
@@ -74,12 +75,12 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
     }
     .virtual-page {
       background: white;
-      width: 210mm;
-      height: 297mm; /* Fixed height for true pagination */
+      width: ${pageWidth};
+      height: ${pageHeight}; /* Fixed height for true pagination */
       margin-bottom: 20px;
       box-shadow: 0 0 10px rgba(0,0,0,0.2);
       position: relative;
-      padding: 2.5cm; /* Uses the margin setting */
+      padding: ${margin}cm; /* Uses the margin setting */
       box-sizing: border-box;
       overflow: hidden;
     }
@@ -104,19 +105,17 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
     #contentSource { display: none; }
 
     @media print {
-      @page {
-        size: ${pageSizeCSS};
-        margin: 0; 
-      }
       .preview-page { background: none; margin: 0; }
       .virtual-page {
         box-shadow: none;
         margin: 0;
         page-break-after: always;
-        width: 100%;
-        height: 100vh; /* Match physical page */
+        /* Keep exact onscreen dimensions */
+        width: ${pageWidth};
+        height: ${pageHeight};
       }
-      .page-header, .page-footer { position: absolute; }
+      /* Match onscreen flow layout */
+      .page-header, .page-footer { position: static; }
     }
   </style>
 </head>
