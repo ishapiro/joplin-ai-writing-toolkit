@@ -52,6 +52,47 @@ export function getPanelHtml(modelOptions: string): string {
       </div>
     </div>
 
+    <!-- Help Modal -->
+    <div id="ai-help-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 8px; width: 85%; max-height: 85%; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3); font-family: sans-serif;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+          <h3 style="margin: 0; color: #2c2c2c;">🤖 AI Writing Tools Help</h3>
+          <button id="close-ai-help" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+        </div>
+        
+        <div style="color: #2c2c2c; line-height: 1.6; font-size: 14px;">
+          <h4 style="margin: 15px 0 8px 0; color: #000;">📋 Action Buttons</h4>
+          <ul style="margin: 0 0 15px 20px; padding: 0;">
+            <li><strong>📝 Append</strong> - Appends the AI response to the current note.</li>
+            <li><strong>🔄 Replace</strong> - Replaces the note with the AI response.</li>
+            <li><strong>📍 Insert</strong> - Inserts response at cursor position.</li>
+            <li><strong>📄 New Note</strong> - Creates a new note with the response.</li>
+            <li><strong>📋 Note→Prompt</strong> - Copies note to chat prompt.</li>
+            <li><strong>✂️ Selected→Prompt</strong> - Copies selected text to prompt.</li>
+            <li><strong>✅ Grammar</strong> - Checks grammar of selected text.</li>
+          </ul>
+
+          <h4 style="margin: 15px 0 8px 0; color: #000;">✨ Features</h4>
+          <ul style="margin: 0 0 15px 20px; padding: 0;">
+            <li><strong>Interactive Chat</strong> - Chat with context history.</li>
+            <li><strong>Grammar Correction</strong> - Review changes in a preview modal.</li>
+            <li><strong>Secure</strong> - API keys are stored safely in Joplin settings.</li>
+          </ul>
+
+          <h4 style="margin: 15px 0 8px 0; color: #000;">🚀 Getting Started</h4>
+          <ol style="margin: 0 0 15px 20px; padding: 0;">
+            <li>Set your OpenAI API key in <em>Settings → AI Writing Toolkit</em>.</li>
+            <li>Use action buttons or type in the prompt field.</li>
+            <li>Press <strong>Enter</strong> to send, <strong>Shift+Enter</strong> for a new line.</li>
+          </ol>
+        </div>
+        
+        <div style="margin-top: 25px; text-align: right;">
+          <button id="ok-ai-help" style="padding: 8px 25px; background: #2c2c2c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Got it</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Grammar Check Modal -->
     <div id="grammar-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
       <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; max-width: 80%; max-height: 80%; overflow-y: auto;">

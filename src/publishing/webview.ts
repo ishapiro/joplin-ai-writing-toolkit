@@ -56,6 +56,30 @@
       const closeBtn = document.getElementById('closeButton');
       if (closeBtn) closeBtn.onclick = () => (window as any).webviewApi.postMessage({ type: 'closePublishingPanel' });
 
+      const helpBtn = document.getElementById('helpButton');
+      if (helpBtn) {
+        helpBtn.onclick = () => {
+          const modal = document.getElementById('help-modal');
+          if (modal) modal.style.display = 'block';
+        };
+      }
+
+      const closeHelpBtn = document.getElementById('close-help-modal');
+      if (closeHelpBtn) {
+        closeHelpBtn.onclick = () => {
+          const modal = document.getElementById('help-modal');
+          if (modal) modal.style.display = 'none';
+        };
+      }
+
+      const okHelpBtn = document.getElementById('ok-help-modal');
+      if (okHelpBtn) {
+        okHelpBtn.onclick = () => {
+          const modal = document.getElementById('help-modal');
+          if (modal) modal.style.display = 'none';
+        };
+      }
+
       // Debounced metadata updates
       let debounceTimer: any;
       const notifyChange = () => {
@@ -205,6 +229,14 @@
     const maxPageHeight = contentArea.offsetHeight;
 
     for (const child of children) {
+      // Manual page break support: check if element is a page break marker
+      if (child.textContent?.trim() === '---page-break---') {
+        const newTarget = createNewPage();
+        page = newTarget.page;
+        contentArea = newTarget.contentArea;
+        continue;
+      }
+
       const childClone = child.cloneNode(true) as HTMLElement;
       contentArea.appendChild(childClone);
 
@@ -238,16 +270,73 @@
     const body = document.getElementById('previewBody');
     if (!holder || !body) return;
 
-    // Use actual dimensions of the virtual page for scaling
-    const firstPage = document.querySelector('.virtual-page') as HTMLElement;
-    const pageWidth = firstPage ? firstPage.offsetWidth : 210 * 3.78; 
-    const pageHeight = firstPage ? firstPage.offsetHeight : 297 * 3.78;
+    // Use ResizeObserver for more reliable dimension tracking
+    if (!(window as any).__previewResizeObserver) {
+      (window as any).__previewResizeObserver = new ResizeObserver(() => {
+        if (!isInternalChange) scalePreviewToFit();
+      });
+      (window as any).__previewResizeObserver.observe(body);
+    }
+
+    // Find the currently visible page to get accurate dimensions
+    const pages = document.querySelectorAll('#pageContainer .virtual-page');
+    let activePage = null;
+    for (const p of Array.from(pages)) {
+      if ((p as HTMLElement).style.display !== 'none') {
+        activePage = p as HTMLElement;
+        break;
+      }
+    }
+
+    // If no page is visible (shouldn't happen) or we're on the first measurement,
+    // temporarily show the first page to measure it
+    let pageWidth, pageHeight;
+    if (activePage && activePage.offsetWidth > 0) {
+      pageWidth = activePage.offsetWidth;
+      pageHeight = activePage.offsetHeight;
+    } else {
+      const firstPage = pages[0] as HTMLElement;
+      if (!firstPage) return;
+      
+      // Measure properly even if hidden
+      const prevDisplay = firstPage.style.display;
+      const prevVisibility = firstPage.style.visibility;
+      const prevPosition = firstPage.style.position;
+      
+      firstPage.style.display = 'block';
+      firstPage.style.visibility = 'hidden';
+      firstPage.style.position = 'absolute';
+      
+      pageWidth = firstPage.offsetWidth;
+      pageHeight = firstPage.offsetHeight;
+      
+      firstPage.style.display = prevDisplay;
+      firstPage.style.visibility = prevVisibility;
+      firstPage.style.position = prevPosition;
+    }
+
+    if (pageWidth <= 0 || pageHeight <= 0) {
+      // Hard fallback to A4/Letter approx if measurement fails
+      pageWidth = 210 * 3.78; 
+      pageHeight = 297 * 3.78;
+    }
 
     const padding = 40; 
     const availableWidth = body.offsetWidth - padding;
     const availableHeight = body.offsetHeight - padding;
     
-    if (availableWidth <= 0 || availableHeight <= 0) return;
+    console.info(`DEBUG: scalePreviewToFit dimensions - body: ${body.offsetWidth}x${body.offsetHeight}, page: ${pageWidth}x${pageHeight}`);
+
+    if (availableWidth <= 0 || availableHeight <= 0) {
+      // If we don't have dimensions yet, try again shortly (max 10 retries)
+      const retries = (window as any).__scaleRetries || 0;
+      if (retries < 10) {
+        (window as any).__scaleRetries = retries + 1;
+        setTimeout(scalePreviewToFit, 100);
+      }
+      return;
+    }
+    (window as any).__scaleRetries = 0;
 
     // Scale to fit BOTH width and height for a single page
     const scaleX = availableWidth / pageWidth;
@@ -256,7 +345,7 @@
 
     holder.style.transform = `scale(${scale})`;
     
-    console.info(`DEBUG: Scaled preview to ${Math.round(scale * 100)}%`);
+    console.info(`DEBUG: Scaled preview to ${Math.round(scale * 100)}% on page ${currentPageIndex + 1}`);
   }
 
   // Handle incoming messages (Single Global Listener)

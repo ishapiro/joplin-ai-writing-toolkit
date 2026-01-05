@@ -129,10 +129,33 @@ The panel includes three main sections:
 
 ### Panel Actions
 
-| Button | Action |
-|--------|--------|
-| **Refresh from Note** | Reloads all settings from the current note's Front Matter. Use this if you've edited Front Matter directly in your note. |
-| **Generate Preview** | *(Coming soon)* Generates a preview of how your document will look as a PDF. |
+| Button | Action | Description |
+|--------|--------|-------------|
+| **Refresh from Note** | Reloads settings | Reloads all settings from the current note's Front Matter. Use this if you've edited Front Matter directly in your note. |
+| **Generate Preview** | Preview Document | Generates a live, paginated preview of how your document will look when printed or saved as a PDF. |
+
+### Printing & Page Breaks
+
+The AI Writing Toolkit uses a custom fragmentation engine to ensure your notes are properly paginated for PDF output.
+
+#### Manual Page Breaks
+You can force a new page at any point in your document by adding the following marker on its own line:
+```markdown
+---page-break---
+```
+
+#### How to Print / Save as PDF
+1. Open the **PDF Publishing Settings** panel.
+2. Click **Generate Preview**.
+3. In the preview window, click the **Print PDF** button.
+4. When the system print dialog appears:
+   - Select **Save as PDF** as the destination to create a file.
+   - Select a physical printer to print directly.
+
+#### Pagination Features
+- **Automatic Fragmentation**: Long sections of text are automatically broken into separate pages.
+- **Title Page**: A dedicated title page is created using your front matter settings.
+- **Headers & Footers**: Consistent headers, footers, and page numbers are applied to every page except the title page.
 
 ### Best Practices
 

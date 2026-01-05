@@ -42,11 +42,31 @@
   document.querySelectorAll('.action-button').forEach((btn) => {
     btn.addEventListener('click', () => {
       const action = btn.getAttribute('data-action') || '';
-      if (action) {
+      if (action === 'showAbout') {
+        const modal = document.getElementById('ai-help-modal');
+        if (modal) modal.style.display = 'block';
+      } else if (action) {
         executeAction(action);
       }
     });
   });
+
+  // AI Help Modal Close Buttons
+  const closeAiHelpBtn = document.getElementById('close-ai-help');
+  if (closeAiHelpBtn) {
+    closeAiHelpBtn.onclick = () => {
+      const modal = document.getElementById('ai-help-modal');
+      if (modal) modal.style.display = 'none';
+    };
+  }
+
+  const okAiHelpBtn = document.getElementById('ok-ai-help');
+  if (okAiHelpBtn) {
+    okAiHelpBtn.onclick = () => {
+      const modal = document.getElementById('ai-help-modal');
+      if (modal) modal.style.display = 'none';
+    };
+  }
 
   // Model selector
   const modelSelector = document.getElementById('modelSelector') as HTMLSelectElement;

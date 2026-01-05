@@ -138,53 +138,6 @@ export class PanelHandler {
           
           return { success: true, message: 'Grammar check completed! Please review the changes.' };
           
-        case 'showAbout':
-          // Send comprehensive help information to the chat
-          await joplin.views.panels.postMessage(this.panel, {
-            type: 'addMessage',
-            sender: 'assistant',
-            content: `<strong>🤖 AI Writing Toolkit Beta 1.0 - Help & Features</strong><br><br>
-<strong>📋 Action Buttons:</strong><br>
-• <strong>📝 Append</strong> - Appends the AI response to the end of the current note<br>
-• <strong>🔄 Replace</strong> - Replaces the entire current note with the AI response<br>
-• <strong>📍 Insert</strong> - Inserts the AI response at your cursor position in the note<br>
-• <strong>📄 New Note</strong> - Creates a new note with the AI response<br>
-• <strong>📋 Note→Prompt</strong> - Copies the entire current note content to the chat prompt<br>
-• <strong>✂️ Selected→Prompt</strong> - Copies your selected text to the chat prompt<br>
-• <strong>✅ Grammar</strong> - Checks grammar and spelling of selected text with preview<br>
-• <strong>ℹ️ Help</strong> - Shows this help information<br><br>
-<strong>✨ Features:</strong><br>
-• 💬 Interactive chat with conversation history<br>
-• 📝 Copy response to clipboard or Joplin note<br>
-• ✅ Grammar and spelling correction with preview<br>
-• ✂️ Copy selected text to chat prompt<br>
-• 🔒 Secure API key handling<br>
-• 🎨 Professional UI<br>
-• 📚 Conversation history maintains context across exchanges<br><br>
-<strong>🚀 Getting Started:</strong><br>
-1. Set your OpenAI API key in <em>Settings → AI Writing Toolkit</em><br>
-2. Use the action buttons above or type your questions in the prompt field<br>
-3. Select text in notes to use context-aware features like grammar checking<br>
-4. Press Enter to send messages, or Shift+Enter for a new line<br><br>
-<strong>🛠️ Technical Details:</strong><br>
-• <strong>Models Supported:</strong> GPT-5, GPT-4.1, GPT-4o, o1, o3, o4-mini series<br>
-• <strong>API:</strong> Latest OpenAI API with reasoning support<br>
-• <strong>Security:</strong> Input validation, content sanitization, secure token handling<br>
-• <strong>Performance:</strong> Token-aware history trimming, efficient API calls<br><br>
-<strong>📚 Resources:</strong><br>
-• <a href="https://github.com/ishapiro/joplin-ai-writing-toolkit" target="_blank">GitHub Repository</a> - Documentation, issues, updates<br>
-• <a href="https://platform.openai.com/api-keys" target="_blank">Get OpenAI API Key</a><br>
-• <a href="https://github.com/ishapiro/joplin-ai-writing-toolkit/issues" target="_blank">Report Issues</a> - Bug reports and feature requests<br>
-• <a href="https://joplinapp.org/plugins/" target="_blank">Joplin Plugin Forum</a> - Community support<br><br>
-<strong>👨‍💻 Developer:</strong> Irv Shapiro / Cogitations, LLC<br>
-<strong>📄 License:</strong> MIT License<br>
-            <strong>🏷️ Version:</strong> Beta 1.0<br>
-<strong>🏢 Learn about Cogitations, LLC:</strong> <a href="https://cogitations.com" target="_blank">https://cogitations.com</a><br><br>
-<em>Thank you for using AI Writing Toolkit! ⭐ Star the repo if you find it helpful!</em>`
-          });
-          
-          return { success: true, message: 'Help information displayed' };
-          
         default:
           return { success: false, error: 'Unknown action: ' + action };
       }

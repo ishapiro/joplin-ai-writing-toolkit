@@ -4,7 +4,10 @@ export function getPublishingPanelHtml(): string {
     <div class="chat-container">
       <div class="chat-header">
         <h3>PDF Publishing Settings</h3>
-        <button class="close-button" id="closeButton" title="Close Panel">✕</button>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="help-link" id="helpButton" title="Help & Documentation">❓ Help</button>
+          <button class="close-button" id="closeButton" title="Close Panel">✕</button>
+        </div>
       </div>
       
       <div class="settings-scroll-area">
@@ -72,6 +75,46 @@ export function getPublishingPanelHtml(): string {
       </div>
     </div>
 
+    <!-- Help Modal -->
+    <div id="help-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 8px; width: 85%; max-height: 85%; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3); font-family: sans-serif;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+          <h3 style="margin: 0; color: #2c2c2c;">🖨️ PDF Publishing Help</h3>
+          <button id="close-help-modal" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+        </div>
+        
+        <div style="color: #2c2c2c; line-height: 1.6; font-size: 14px;">
+          <h4 style="margin: 15px 0 8px 0; color: #000;">✨ Features</h4>
+          <ul style="margin: 0 0 15px 20px; padding: 0;">
+            <li><strong>Live Preview</strong> - See exactly how your PDF will look before printing.</li>
+            <li><strong>Auto-Pagination</strong> - Automatic fragmentation of long notes into pages.</li>
+            <li><strong>Title Pages</strong> - Automatic generation from note metadata.</li>
+            <li><strong>Front Matter</strong> - All settings are stored in your note's YAML front matter.</li>
+          </ul>
+
+          <h4 style="margin: 15px 0 8px 0; color: #000;">📄 Page Breaks</h4>
+          <p style="margin-bottom: 15px;">To force a new page at a specific location, add this on its own line in your note:<br>
+          <code style="background: #f0f0f0; padding: 2px 5px; border-radius: 3px; font-family: monospace;">---page-break---</code></p>
+
+          <h4 style="margin: 15px 0 8px 0; color: #000;">🖨️ How to Print</h4>
+          <ol style="margin: 0 0 15px 20px; padding: 0;">
+            <li>Configure settings (Title, Author, Margins, etc.) in this panel.</li>
+            <li>Click <strong>Generate Preview</strong> at the bottom.</li>
+            <li>In the preview, click <strong>Print PDF</strong>.</li>
+            <li>In the system dialog, select <strong>Save as PDF</strong> to create a file, or select a printer.</li>
+          </ol>
+
+          <div style="background: #f9f9f9; border-left: 4px solid #0066cc; padding: 12px; margin-top: 20px; font-size: 13px;">
+            <strong>💡 Tip:</strong> Settings are synced with the YAML block at the top of your note. You can edit them there directly and click <strong>Refresh from Note</strong> to update this panel.
+          </div>
+        </div>
+        
+        <div style="margin-top: 25px; text-align: right;">
+          <button id="ok-help-modal" style="padding: 8px 25px; background: #2c2c2c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Got it</button>
+        </div>
+      </div>
+    </div>
+
     <style>
       .chat-container {
         display: flex;
@@ -115,6 +158,23 @@ export function getPublishingPanelHtml(): string {
       .close-button:hover {
         background: rgba(0, 0, 0, 0.1);
         color: #333333;
+      }
+
+      .help-link {
+        background: transparent;
+        color: #0066cc;
+        border: 1px solid #0066cc;
+        font-size: 13px;
+        cursor: pointer;
+        padding: 4px 10px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        font-weight: 500;
+      }
+
+      .help-link:hover {
+        background: #0066cc;
+        color: white;
       }
 
       .settings-scroll-area {
