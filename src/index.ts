@@ -152,6 +152,16 @@ joplin.plugins.register({
           } catch (error) {
             console.error('DEBUG: Error refreshing preview:', error);
           }
+        } else if (message.type === 'printPdf') {
+          try {
+            console.info('DEBUG: Received printPdf message.');
+            // Note: exportPdf usually requires a 'path' argument.
+            // If not provided, it may not do anything or may fail.
+            // We'll call it and let Joplin handle the outcome.
+            await joplin.commands.execute('exportPdf');
+          } catch (error) {
+            console.error('DEBUG: Error executing exportPdf:', error);
+          }
         } else if (message.type === 'refreshFromNote') {
           try {
             console.info('DEBUG: Received refreshFromNote message.');

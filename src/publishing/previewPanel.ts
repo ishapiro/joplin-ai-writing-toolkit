@@ -5,6 +5,7 @@ export function getPreviewPanelHtml(htmlContent: string): string {
         <h3>PDF Preview</h3>
         <div class="preview-actions">
           <button class="action-button" id="refreshButton">Refresh</button>
+          <button class="action-button" id="printButton">Print PDF</button>
           <button class="close-button" id="closePreviewButton" title="Close">✕</button>
         </div>
       </div>

@@ -91,6 +91,14 @@
           (window as any).webviewApi.postMessage({ type: 'refreshPreview' });
         };
       }
+
+      const printBtn = document.getElementById('printButton');
+      if (printBtn) {
+        printBtn.onclick = () => {
+          console.info('DEBUG: printButton clicked.');
+          (window as any).webviewApi.postMessage({ type: 'printPdf' });
+        };
+      }
     }
   }
 
