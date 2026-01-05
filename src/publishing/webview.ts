@@ -1,144 +1,117 @@
 
-// Publishing Panel Webview Script
+// Combined Publishing & Preview Script
+// Registered once, handles all DOM changes automatically.
 
-// declare const webviewApi: any; // Handled globally via window
-
-// Hack to fix "exports is not defined" error if webpack adds commonjs exports
 (window as any).exports = {};
 
 (function() {
-  const previewButton = document.getElementById('previewButton');
-  const refreshButton = document.getElementById('refreshButton');
-  const closeButton = document.getElementById('closeButton');
+  if ((window as any).__publishingWebviewInitialized) return;
+  (window as any).__publishingWebviewInitialized = true;
 
-  // Input mapping
-  const inputIds = {
-    title: 'docTitle',
-    subtitle: 'docSubtitle',
-    author: 'docAuthor',
-    date: 'docDate',
-    logo: 'docLogo',
-    page_size: 'pageSize',
-    margin: 'pageMargin',
-    header: 'headerText',
-    footer: 'footerText',
-    show_page_numbers: 'showPageNumbers'
-  };
+  console.log('Publishing toolkit script active.');
 
-  // Helper to get input value
-  function getVal(id: string): string {
-    const el = document.getElementById(id) as HTMLInputElement;
-    return el ? el.value : '';
-  }
+  // This function binds all listeners based on what's currently in the DOM
+  function bindListeners() {
+    console.log('bindListeners: Checking DOM...');
 
-  // Helper to set input value
-  function setVal(id: string, val: string | undefined) {
-    const el = document.getElementById(id) as HTMLInputElement;
-    if (el) el.value = val || '';
-  }
+    // 1. Settings Mode Elements
+    const previewButton = document.getElementById('previewButton');
+    if (previewButton) {
+      console.log('bindListeners: Settings mode detected.');
+      const inputIds = {
+        title: 'docTitle', subtitle: 'docSubtitle', author: 'docAuthor', 
+        date: 'docDate', logo: 'docLogo', page_size: 'pageSize', 
+        margin: 'pageMargin', header: 'headerText', footer: 'footerText', 
+        show_page_numbers: 'showPageNumbers'
+      };
 
-  // Helper to get checkbox
-  function getCheck(id: string): boolean {
-    const el = document.getElementById(id) as HTMLInputElement;
-    return el ? el.checked : false;
-  }
+      const getSettings = () => {
+        const getVal = (id: string) => (document.getElementById(id) as HTMLInputElement)?.value || '';
+        const getCheck = (id: string) => (document.getElementById(id) as HTMLInputElement)?.checked || false;
+        return {
+          title: getVal(inputIds.title),
+          subtitle: getVal(inputIds.subtitle),
+          author: getVal(inputIds.author),
+          date: getVal(inputIds.date),
+          logo: getVal(inputIds.logo),
+          page_size: getVal(inputIds.page_size),
+          margin: getVal(inputIds.margin),
+          header: getVal(inputIds.header),
+          footer: getVal(inputIds.footer),
+          show_page_numbers: getCheck(inputIds.show_page_numbers)
+        };
+      };
 
-  // Helper to set checkbox
-  function setCheck(id: string, val: boolean | undefined) {
-    const el = document.getElementById(id) as HTMLInputElement;
-    if (el) el.checked = !!val;
-  }
+      previewButton.onclick = () => {
+        (window as any).webviewApi.postMessage({ type: 'generatePreview', settings: getSettings() });
+      };
 
-  // Gather all settings from inputs
-  function getSettings() {
-    return {
-      title: getVal(inputIds.title),
-      subtitle: getVal(inputIds.subtitle),
-      author: getVal(inputIds.author),
-      date: getVal(inputIds.date),
-      logo: getVal(inputIds.logo),
-      page_size: getVal(inputIds.page_size),
-      margin: getVal(inputIds.margin),
-      header: getVal(inputIds.header),
-      footer: getVal(inputIds.footer),
-      show_page_numbers: getCheck(inputIds.show_page_numbers)
-    };
-  }
+      const refreshBtn = document.getElementById('refreshButton');
+      if (refreshBtn) refreshBtn.onclick = () => (window as any).webviewApi.postMessage({ type: 'refreshFromNote' });
 
-  // Send update to plugin (debounced)
-  let debounceTimer: any;
-  function notifyChange() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      webviewApi.postMessage({
-        type: 'updateNoteMetadata',
-        settings: getSettings()
+      const closeBtn = document.getElementById('closeButton');
+      if (closeBtn) closeBtn.onclick = () => (window as any).webviewApi.postMessage({ type: 'closePublishingPanel' });
+
+      // Debounced metadata updates
+      let debounceTimer: any;
+      const notifyChange = () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          (window as any).webviewApi.postMessage({ type: 'updateNoteMetadata', settings: getSettings() });
+        }, 500);
+      };
+
+      Object.values(inputIds).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.oninput = notifyChange;
+          el.onchange = notifyChange;
+        }
       });
-    }, 500); // 500ms debounce
-  }
-
-  // Attach listeners to all inputs
-  Object.values(inputIds).forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('input', notifyChange); // covers text and number inputs
-      el.addEventListener('change', notifyChange); // covers select and checkbox
     }
-  });
 
-  if (refreshButton) {
-    refreshButton.addEventListener('click', () => {
-      webviewApi.postMessage({
-        type: 'refreshFromNote'
-      });
-    });
-  }
-
-  if (previewButton) {
-    previewButton.addEventListener('click', () => {
-      webviewApi.postMessage({
-        type: 'generatePreview',
-        settings: getSettings()
-      });
-    });
-  }
-
-  if (closeButton) {
-    closeButton.addEventListener('click', () => {
-      webviewApi.postMessage({
-        type: 'closePublishingPanel'
-      });
-    });
-  }
-
-  // Handle messages from plugin
-  webviewApi.onMessage((message: any) => {
-    console.info('Publishing webview received message:', message);
-    
-    // Handle the case where message is wrapped in a 'message' property
-    const actualMessage = message.message || message;
-    
-    if (actualMessage && actualMessage.type === 'updatePanelFields') {
-      const s = actualMessage.settings || {};
-      console.info('Updating panel fields with settings:', s);
+    // 2. Preview Mode Elements
+    const closePreviewBtn = document.getElementById('closePreviewButton');
+    if (closePreviewBtn) {
+      console.log('bindListeners: Preview mode detected.');
+      closePreviewBtn.onclick = () => (window as any).webviewApi.postMessage({ type: 'closePreview' });
       
-      setVal(inputIds.title, s.title);
-      setVal(inputIds.subtitle, s.subtitle);
-      setVal(inputIds.author, s.author);
-      setVal(inputIds.date, s.date);
-      setVal(inputIds.logo, s.logo);
-      setVal(inputIds.page_size, s.page_size || 'Letter'); // Default fallback
-      setVal(inputIds.margin, s.margin || '2.5'); // Default fallback
-      setVal(inputIds.header, s.header);
-      setVal(inputIds.footer, s.footer);
-      
-      // Special handling for checkbox: if undefined, default to true, else use value
-      if (s.show_page_numbers === undefined) {
-        setCheck(inputIds.show_page_numbers, true);
-      } else {
-        setCheck(inputIds.show_page_numbers, s.show_page_numbers);
+      const refreshPreviewBtn = document.getElementById('refreshButton');
+      if (refreshPreviewBtn) {
+        refreshPreviewBtn.onclick = () => (window as any).webviewApi.postMessage({ type: 'refreshPreview' });
       }
     }
-  });
+  }
 
+  // Handle incoming messages (Single Global Listener)
+  if (typeof (window as any).webviewApi !== 'undefined') {
+    (window as any).webviewApi.onMessage((message: any) => {
+      const actualMessage = message.message || message;
+      if (actualMessage.type === 'updatePanelFields') {
+        const s = actualMessage.settings || {};
+        const setVal = (id: string, val: any) => { const el = document.getElementById(id) as HTMLInputElement; if (el) el.value = val || ''; };
+        const setCheck = (id: string, val: any) => { const el = document.getElementById(id) as HTMLInputElement; if (el) el.checked = !!val; };
+        
+        setVal('docTitle', s.title);
+        setVal('docSubtitle', s.subtitle);
+        setVal('docAuthor', s.author);
+        setVal('docDate', s.date);
+        setVal('docLogo', s.logo);
+        setVal('pageSize', s.page_size || 'Letter');
+        setVal('pageMargin', s.margin || '2.5');
+        setVal('headerText', s.header);
+        setVal('footerText', s.footer);
+        setCheck('showPageNumbers', s.show_page_numbers !== false);
+      }
+    });
+  }
+
+  // MutationObserver detects when setHtml replaces the panel content
+  const observer = new MutationObserver(() => {
+    bindListeners();
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // Initial run
+  bindListeners();
 })();
