@@ -39,7 +39,8 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
   }
 
   // 2. Generate content HTML
-  const htmlContent = md.render(content);
+  const htmlContent = md.render(content)
+    .replace(/<p>---page-break---<\/p>/g, '</div><div class="virtual-page content-virtual-page" style="height: auto; min-height: 297mm;"><div class="content-area">');
 
   // 3. Prepare title page data
   const title = settings.title || noteTitle;
@@ -69,158 +70,90 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
     body {
       margin: 0;
       padding: 0;
-      background: #f0f0f0;
+      background: transparent;
     }
-    .preview-page {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 60px 40px; /* Top padding: 60px, Side: 40px */
+    .virtual-page {
       background: white;
+      width: 210mm;
+      height: 297mm; /* Fixed height for true pagination */
+      margin-bottom: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
       position: relative;
-      min-height: 100vh;
+      padding: 2.5cm; /* Uses the margin setting */
       box-sizing: border-box;
-      padding-bottom: 80px; /* Bottom padding: 80px */
+      overflow: hidden;
     }
     
-    /* Visual page break guides (Screen only) */
-    .preview-spacer {
-      height: 100px;
-      margin: 40px -40px;
-      background: #f0f0f0;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 10px 40px;
-      box-sizing: border-box;
-      position: relative;
-    }
-    .spacer-line {
-      position: absolute;
-      top: 50%;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: rgba(33, 150, 243, 0.4);
-      pointer-events: none;
-    }
-    .spacer-footer, .spacer-header {
-      font-size: 0.85em;
-      color: #888;
-      text-align: center;
-      border: none;
-      padding: 0;
-      margin: 0;
-    }
-    .spacer-header { text-align: right; }
-
     .title-page {
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      /* Height calculation: Full Page Height - Top Padding (60px) */
-      height: calc(${pageHeight} - 60px);
+      height: 100%;
       text-align: center;
-      page-break-after: always;
       box-sizing: border-box;
     }
-    .title-page img { max-width: 200px; margin-bottom: 20px; }
-    .title-page h1 { font-size: 2.5em; margin: 0.2em 0; }
-    .title-page h2 { font-size: 1.5em; color: #666; font-weight: normal; }
-    .title-page .meta { margin-top: 40px; font-size: 1.1em; color: #888; }
     
-    .content {
-      padding-bottom: 40px;
+    .content-area {
+      height: 100%;
+      width: 100%;
+      position: relative;
     }
-    .content h1 { border-bottom: 1px solid #eee; padding-bottom: 0.3em; margin-top: 1.5em; }
-    .content h2 { border-bottom: 1px solid #fafafa; padding-bottom: 0.2em; margin-top: 1.2em; }
-    .content pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
-    .content blockquote { border-left: 5px solid #ddd; padding-left: 15px; color: #666; font-style: italic; }
-    .content table { border-collapse: collapse; width: 100%; margin: 20px 0; }
-    .content th, .content td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-    .content th { background: #f8f8f8; }
-    
-    .note-box {
-      background: #e7f3ff;
-      border-left: 5px solid #2196F3;
-      padding: 15px;
-      margin: 20px 0;
-      border-radius: 0 5px 5px 0;
-      display: flex;
-      gap: 15px;
-    }
-    .note-icon { font-size: 1.5em; }
-    .note-content { flex: 1; }
-    .note-content p:last-child { margin-bottom: 0; }
 
-    .header, .footer {
-      font-size: 0.85em;
-      color: #888;
-      pointer-events: none;
-    }
-    .header { 
-      text-align: right; 
-      border-bottom: 1px solid #f0f0f0;
-      padding-bottom: 5px;
-      margin-bottom: 20px;
-    }
-    .footer { 
-      text-align: center; 
-      padding-top: 10px; 
-    }
+    /* Source content remains hidden until fragmented */
+    #contentSource { display: none; }
 
     @media print {
-      body { 
-        background: white; 
-        -webkit-print-color-adjust: exact; 
-        print-color-adjust: exact;
-      }
-      .preview-page { 
-        padding: 0; 
-        padding-bottom: 0; 
-        max-width: none; 
+      @page {
+        size: ${pageSizeCSS};
         margin: 0; 
-        background-image: none;
-        box-shadow: none;
       }
-      .header, .footer { position: fixed; left: 0; right: 0; font-size: 0.8em; }
-      .header { top: 0; }
-      .footer { bottom: 0; border-top: 1px solid #f0f0f0; }
-      .title-page { height: 100vh; border: none; }
+      .preview-page { background: none; margin: 0; }
+      .virtual-page {
+        box-shadow: none;
+        margin: 0;
+        page-break-after: always;
+        width: 100%;
+        height: 100vh; /* Match physical page */
+      }
+      .page-header, .page-footer { position: absolute; }
     }
   </style>
 </head>
 <body>
   <div class="preview-page">
-    ${header ? `<div class="header" id="headerOriginal">${header}</div>` : ''}
-    
-    <div class="title-page">
-      ${logo ? `<img src="${logo}" />` : ''}
-      <h1>${title}</h1>
-      ${subtitle ? `<h2>${subtitle}</h2>` : ''}
-      <div class="meta">
-        ${author ? `<div>By ${author}</div>` : ''}
-        <div>${date}</div>
+    <div id="contentSource">${htmlContent}</div>
+    <div id="pageContainer">
+      <!-- Title Page (Always first) -->
+      <div class="virtual-page" id="titlePageContainer">
+        <div class="title-page">
+          ${logo ? `<img src="${logo}" />` : ''}
+          <h1>${title}</h1>
+          ${subtitle ? `<h2>${subtitle}</h2>` : ''}
+          <div class="meta">
+            ${author ? `<div>By ${author}</div>` : ''}
+            <div>${date}</div>
+          </div>
+        </div>
+        ${showPageNumbers ? `<div class="page-footer">Page <span class="page-number">1</span></div>` : ''}
       </div>
     </div>
 
-    <div class="content">
-      ${htmlContent}
-    </div>
-
-    ${footer || showPageNumbers ? `
-      <div class="footer-template" id="footerTemplate" style="display: none;">
-        ${footer}${footer && showPageNumbers ? ' | ' : ''}${showPageNumbers ? 'Page <span class="pageNumber"></span>' : ''}
+    <!-- Templates for Fragmented Pages -->
+    <template id="pageTemplate">
+      <div class="virtual-page">
+        ${header ? `<div class="page-header">${header}</div>` : ''}
+        <div class="content-area"></div>
+        ${footer || showPageNumbers ? `
+          <div class="page-footer">
+            ${footer}${footer && showPageNumbers ? ' | ' : ''}${showPageNumbers ? 'Page <span class="page-number"></span>' : ''}
+          </div>
+        ` : ''}
       </div>
-    ` : ''}
+    </template>
   </div>
 
   <script>
-    // Note: This script might not execute in Joplin's webview if injected via setHtml.
-    // We handle the heavy lifting in publishing/webview.ts instead.
     console.log('Preview HTML loaded');
   </script>
 </body>

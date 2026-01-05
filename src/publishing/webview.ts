@@ -75,9 +75,13 @@
     if (closePreviewBtn) {
       console.log('bindListeners: Preview mode detected.');
       
-      // Handle page numbers and footers in preview with a slight delay 
-      // to allow for content rendering and height calculation
-      setTimeout(() => setupPreviewPageMarkers(), 300);
+      // Fragment content into virtual pages and scale to fit
+      setTimeout(() => {
+        fragmentContentIntoPages();
+        scalePreviewToFit();
+      }, 100);
+
+      window.onresize = () => scalePreviewToFit();
 
       closePreviewBtn.onclick = () => {
         console.info('DEBUG: closePreviewButton clicked.');
@@ -108,86 +112,76 @@
     }
   }
 
-  function setupPreviewPageMarkers() {
-    const previewPage = document.querySelector('.preview-page') as HTMLElement;
-    const contentArea = document.querySelector('.content') as HTMLElement;
-    const titlePage = document.querySelector('.title-page') as HTMLElement;
-    const footerTemplate = document.getElementById('footerTemplate');
-    const headerOriginal = document.getElementById('headerOriginal');
-    
-    if (!previewPage || !contentArea || !titlePage) return;
+  function fragmentContentIntoPages() {
+    const source = document.getElementById('contentSource');
+    const container = document.getElementById('pageContainer');
+    const template = document.getElementById('pageTemplate') as HTMLTemplateElement;
+    if (!source || !container || !template) return;
 
-    // 1. Clean up existing markers
-    document.querySelectorAll('.preview-spacer').forEach(el => el.remove());
-    document.querySelectorAll('.generated-marker').forEach(el => el.remove());
+    // Clear any previous fragmentation (except title page)
+    const titlePage = document.getElementById('titlePageContainer');
+    container.innerHTML = '';
+    if (titlePage) container.appendChild(titlePage);
 
-    // 2. Determine page height
-    // We'll use a fixed mapping or look for a marker if we had one.
-    // For now, let's look at the title-page height which we set to calc(pageHeight - 60px)
-    const titlePageHeight = titlePage.offsetHeight;
-    const pageHeightPx = titlePageHeight + 60; // Restore the 60px top padding to get full height
+    const children = Array.from(source.children);
+    let currentPageNum = 2;
 
-    console.info(`DEBUG: setupPreviewPageMarkers - pageHeightPx: ${pageHeightPx}`);
-
-    const getFooterHtml = (pageNumber: number) => {
-      if (!footerTemplate) return '';
-      let html = footerTemplate.innerHTML;
-      return html.replace(/<span class="pageNumber"><\/span>/g, pageNumber.toString());
+    const createNewPage = () => {
+      const clone = template.content.cloneNode(true) as HTMLElement;
+      const page = clone.querySelector('.virtual-page') as HTMLElement;
+      const contentArea = clone.querySelector('.content-area') as HTMLElement;
+      const pageNumSpan = clone.querySelector('.page-number');
+      if (pageNumSpan) pageNumSpan.textContent = currentPageNum.toString();
+      
+      container.appendChild(clone);
+      currentPageNum++;
+      return { page, contentArea };
     };
 
-    const getHeaderHtml = () => {
-      return headerOriginal ? headerOriginal.innerHTML : '';
-    };
+    let { page, contentArea } = createNewPage();
+    const maxPageHeight = contentArea.offsetHeight || (297 * 3.78) - (5 * 37.8); // fallback: A4 pixels - margins
 
-    // 3. Create spacer after Title Page (Page 1 -> Page 2)
-    const firstSpacer = document.createElement('div');
-    firstSpacer.className = 'preview-spacer';
-    firstSpacer.innerHTML = `
-      <div class="spacer-footer">${getFooterHtml(1)}</div>
-      <div class="spacer-line"></div>
-      <div class="spacer-header">${getHeaderHtml()}</div>
-    `;
-    titlePage.after(firstSpacer);
-
-    // 4. Iterate through content and insert spacers
-    let currentPage = 2;
-    let currentAccumulatedHeight = 0;
-    // The first element of content starts at the top of Page 2.
-    // We want to avoid exceeding (pageHeightPx - 60px - 80px) of actual content per page
-    // to account for the header (60px) and footer (80px) space.
-    const maxContentHeightPerPage = pageHeightPx - 140; 
-
-    const children = Array.from(contentArea.children);
     for (const child of children) {
-      const childHeight = (child as HTMLElement).offsetHeight;
-      
-      // If this single element is taller than a whole page, we can't do much without splitting it,
-      // but we'll at least put it on its own page.
-      if (currentAccumulatedHeight + childHeight > maxContentHeightPerPage && currentAccumulatedHeight > 0) {
-        // Insert spacer before this element
-        const spacer = document.createElement('div');
-        spacer.className = 'preview-spacer';
-        spacer.innerHTML = `
-          <div class="spacer-footer">${getFooterHtml(currentPage)}</div>
-          <div class="spacer-line"></div>
-          <div class="spacer-header">${getHeaderHtml()}</div>
-        `;
-        child.before(spacer);
-        
-        currentPage++;
-        currentAccumulatedHeight = 0;
-      }
-      
-      currentAccumulatedHeight += childHeight;
-    }
+      const childClone = child.cloneNode(true) as HTMLElement;
+      contentArea.appendChild(childClone);
 
-    // 5. Add final footer
-    const finalFooter = document.createElement('div');
-    finalFooter.className = 'footer generated-marker';
-    finalFooter.style.position = 'relative';
-    finalFooter.style.marginTop = '40px';
-    finalFooter.innerHTML = getFooterHtml(currentPage);
-    contentArea.appendChild(finalFooter);
+      // Check for overflow
+      if (contentArea.scrollHeight > contentArea.offsetHeight) {
+        // If this element alone is too big, it stays but overflows (better than loop)
+        if (contentArea.children.length > 1) {
+          // Move the child to a new page
+          childClone.remove();
+          const newTarget = createNewPage();
+          page = newTarget.page;
+          contentArea = newTarget.contentArea;
+          contentArea.appendChild(childClone);
+        }
+      }
+    }
+    
+    console.info(`DEBUG: Fragmented into ${currentPageNum - 1} pages.`);
+  }
+
+  function scalePreviewToFit() {
+    const holder = document.getElementById('previewContentHolder');
+    const body = document.getElementById('previewBody');
+    if (!holder || !body) return;
+
+    // The A4 page width in pixels (approx)
+    const pageWidth = 210 * 3.78; 
+    const padding = 80; // 40px each side
+    const availableWidth = body.offsetWidth - padding;
+    
+    if (availableWidth <= 0) return;
+
+    const scale = Math.min(1, availableWidth / pageWidth);
+    holder.style.transform = `scale(${scale})`;
+    
+    // Adjust height of the holder so scrolling works correctly
+    const originalHeight = holder.scrollHeight;
+    body.style.minHeight = `${(originalHeight * scale) + padding}px`;
+    
+    console.info(`DEBUG: Scaled preview to ${Math.round(scale * 100)}%`);
   }
 
   // Handle incoming messages (Single Global Listener)

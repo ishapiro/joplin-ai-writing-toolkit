@@ -57,21 +57,19 @@ export function getPreviewPanelHtml(htmlContent: string): string {
       .preview-body {
         flex: 1;
         overflow-y: auto;
-        padding: 20px;
+        padding: 40px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        background: #f0f0f0;
+        background: #e0e0e0;
       }
       #previewContentHolder {
-        background: white;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        width: 100%;
-        max-width: 850px;
-        margin-bottom: 100px;
+        width: auto;
         flex-shrink: 0;
-        position: relative; /* Contain absolute headers/footers */
-        min-height: 100%;
+        position: relative;
+        transform-origin: top center;
+        transition: transform 0.2s ease-out;
+        margin-bottom: 50px;
       }
       
       @media print {
