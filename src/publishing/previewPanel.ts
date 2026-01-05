@@ -73,6 +73,18 @@ export function getPreviewPanelHtml(htmlContent: string): string {
         position: relative; /* Contain absolute headers/footers */
         min-height: 100%;
       }
+      
+      @media print {
+        .preview-header { display: none !important; }
+        .preview-body { 
+          padding: 0 !important; 
+          background: white !important; 
+          overflow: visible !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .preview-container { height: auto !important; }
+      }
     </style>
   `;
 }

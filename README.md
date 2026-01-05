@@ -192,3 +192,19 @@ We welcome contributions!
 - [LinkedIn](https://www.linkedin.com/in/irvshapiro/)
 - [GitHub Repository](https://github.com/ishapiro/joplin-ai-writing-tools)
 - [Personal Website (Cogitations.com)](https://cogitations.com)
+
+## Technical Discoveries
+
+### Reliable Printing in Electron/Joplin
+During the development of the PDF preview system, we discovered a critical workaround for the "only print once" bug notoriously found in Electron-based applications (like Joplin).
+
+**The Problem:**
+In many Electron environments, calling `window.print()` works perfectly the first time, but subsequent calls often fail to open the print dialog. This is due to Chromium's print preview process occasionally failing to release its lock on the renderer process after the dialog is closed.
+
+**The Solution:**
+We implemented a two-part reliability strategy:
+1.  **Afterprint Refresh**: We listen for the `onafterprint` event in the webview. This event fires as soon as the print dialog is closed (whether printed or cancelled).
+2.  **View Reconstruction**: Upon receiving the `afterprint` event, the webview sends a message back to the plugin to trigger a full re-render (`setHtml`) of the panel. This "reconstruction" of the DOM effectively resets the Chromium print state, ensuring the print dialog is ready and reliable for every subsequent click.
+
+This approach allows our PDF Publishing tool to provide a consistent, multi-print experience without requiring access to Electron's restricted Main Process APIs.
+

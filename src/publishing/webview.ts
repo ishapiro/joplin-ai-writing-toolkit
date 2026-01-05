@@ -95,10 +95,16 @@
       const printBtn = document.getElementById('printButton');
       if (printBtn) {
         printBtn.onclick = () => {
-          console.info('DEBUG: printButton clicked.');
-          (window as any).webviewApi.postMessage({ type: 'printPdf' });
+          console.info('DEBUG: printButton clicked. Triggering window.print().');
+          window.print();
         };
       }
+
+      // Reset print state after dialog closes (Strategy B from Electron docs)
+      window.onafterprint = () => {
+        console.info('DEBUG: Afterprint event detected. Requesting refresh.');
+        (window as any).webviewApi.postMessage({ type: 'refreshPreview' });
+      };
     }
   }
 

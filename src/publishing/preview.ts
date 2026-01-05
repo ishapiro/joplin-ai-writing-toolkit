@@ -173,8 +173,19 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
     }
 
     @media print {
-      body { background: white; }
-      .preview-page { padding: 0; padding-bottom: 0; max-width: none; margin: 0; background-image: none; }
+      body { 
+        background: white; 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact;
+      }
+      .preview-page { 
+        padding: 0; 
+        padding-bottom: 0; 
+        max-width: none; 
+        margin: 0; 
+        background-image: none;
+        box-shadow: none;
+      }
       .header, .footer { position: fixed; left: 0; right: 0; font-size: 0.8em; }
       .header { top: 0; }
       .footer { bottom: 0; border-top: 1px solid #f0f0f0; }
