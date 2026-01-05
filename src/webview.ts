@@ -277,7 +277,7 @@
 
   // Handle messages from the plugin
   webviewApi.onMessage((message: any) => {
-    console.info('Webview received message:', message);
+    console.info('DEBUG: AI Webview received message:', message);
     
     // Handle the case where message is wrapped in a 'message' property
     const actualMessage = message.message || message;

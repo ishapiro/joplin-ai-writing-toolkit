@@ -103,11 +103,17 @@ joplin.plugins.register({
         label: 'PDF Publishing Settings',
         iconName: 'fas fa-print',
         execute: async () => {
+           console.info('DEBUG: openPublishingPanel command executing.');
+           console.info('DEBUG: Hiding AI Writing Tools panel:', panelId);
            await joplin.views.panels.hide(panel);
+           
            if (isPreviewMode) {
+             console.info('DEBUG: Leaving preview mode, restoring settings HTML.');
              isPreviewMode = false;
              await joplin.views.panels.setHtml(publishingPanel, getPublishingPanelHtml());
            }
+           
+           console.info('DEBUG: Showing publishing panel:', publishingPanelId);
            await joplin.views.panels.show(publishingPanel);
            
            setTimeout(async () => {
@@ -115,47 +121,40 @@ joplin.plugins.register({
                const note = await getCurrentNote();
                const settings = parseFrontMatter(note.body);
                const webviewSettings = pluginToWebviewSettings(settings);
+               console.info('DEBUG: Posting updatePanelFields to publishing panel.');
                await joplin.views.panels.postMessage(publishingPanel, {
                  type: 'updatePanelFields',
                  settings: webviewSettings
                });
-             } catch (error) {}
+             } catch (error) {
+               console.error('DEBUG: Error updating panel fields:', error);
+             }
            }, 200);
         },
       });
 
       await joplin.views.panels.onMessage(publishingPanel, async (message: any) => {
         if (message.type === 'closePublishingPanel') {
+          console.info('DEBUG: Received closePublishingPanel message.');
           await joplin.views.panels.hide(publishingPanel);
         } else if (message.type === 'closePreview') {
-          console.info('Closing preview mode');
-          isPreviewMode = false;
-          await joplin.views.panels.setHtml(publishingPanel, getPublishingPanelHtml());
-          await joplin.views.panels.show(panel);
-          
-          setTimeout(async () => {
-            try {
-              const note = await getCurrentNote();
-              const settings = parseFrontMatter(note.body);
-              const webviewSettings = pluginToWebviewSettings(settings);
-              await joplin.views.panels.postMessage(publishingPanel, {
-                type: 'updatePanelFields',
-                settings: webviewSettings
-              });
-            } catch (error) {}
-          }, 200);
+          console.info('DEBUG: Received closePreview message.');
+          // Use the registered command to ensure consistent behavior when returning to settings
+          await joplin.commands.execute('openPublishingPanel');
         } else if (message.type === 'refreshPreview') {
           try {
+            console.info('DEBUG: Received refreshPreview message.');
             const note = await getCurrentNote();
             const settings = parseFrontMatter(note.body);
             const pluginSettings = webviewToPluginSettings(settings);
             const previewHtml = generatePreviewHtml(note.body, note.title, pluginSettings);
             await joplin.views.panels.setHtml(publishingPanel, getPreviewPanelHtml(previewHtml));
           } catch (error) {
-            console.error('Error refreshing preview:', error);
+            console.error('DEBUG: Error refreshing preview:', error);
           }
         } else if (message.type === 'refreshFromNote') {
           try {
+            console.info('DEBUG: Received refreshFromNote message.');
             const note = await getCurrentNote();
             const settings = parseFrontMatter(note.body);
             const webviewSettings = pluginToWebviewSettings(settings);
@@ -166,19 +165,24 @@ joplin.plugins.register({
           } catch (error) {}
         } else if (message.type === 'generatePreview') {
           try {
-            console.info('Preview generation requested with settings:', message.settings);
+            console.info('DEBUG: Received generatePreview message with settings:', message.settings);
             const note = await getCurrentNote();
             const pluginSettings = webviewToPluginSettings(message.settings);
             const previewHtml = generatePreviewHtml(note.body, note.title, pluginSettings);
             isPreviewMode = true;
+            
+            console.info('DEBUG: Hiding AI panel before preview.');
             await joplin.views.panels.hide(panel);
+            console.info('DEBUG: Setting preview HTML on publishing panel.');
             await joplin.views.panels.setHtml(publishingPanel, getPreviewPanelHtml(previewHtml));
+            console.info('DEBUG: Showing publishing panel (preview mode).');
             await joplin.views.panels.show(publishingPanel);
           } catch (error) {
-            console.error('Error generating preview:', error);
+            console.error('DEBUG: Error generating preview:', error);
           }
         } else if (message.type === 'updateNoteMetadata') {
           try {
+            console.info('DEBUG: Received updateNoteMetadata message.');
             const note = await getCurrentNote();
             const pluginSettings = webviewToPluginSettings(message.settings);
             const newBody = updateFrontMatter(note.body, pluginSettings);

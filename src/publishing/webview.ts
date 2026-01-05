@@ -74,13 +74,106 @@
     const closePreviewBtn = document.getElementById('closePreviewButton');
     if (closePreviewBtn) {
       console.log('bindListeners: Preview mode detected.');
-      closePreviewBtn.onclick = () => (window as any).webviewApi.postMessage({ type: 'closePreview' });
+      
+      // Handle page numbers and footers in preview with a slight delay 
+      // to allow for content rendering and height calculation
+      setTimeout(() => setupPreviewPageMarkers(), 300);
+
+      closePreviewBtn.onclick = () => {
+        console.info('DEBUG: closePreviewButton clicked.');
+        (window as any).webviewApi.postMessage({ type: 'closePreview' });
+      };
       
       const refreshPreviewBtn = document.getElementById('refreshButton');
       if (refreshPreviewBtn) {
-        refreshPreviewBtn.onclick = () => (window as any).webviewApi.postMessage({ type: 'refreshPreview' });
+        refreshPreviewBtn.onclick = () => {
+          console.info('DEBUG: refreshPreviewButton clicked.');
+          (window as any).webviewApi.postMessage({ type: 'refreshPreview' });
+        };
       }
     }
+  }
+
+  function setupPreviewPageMarkers() {
+    const previewPage = document.querySelector('.preview-page') as HTMLElement;
+    const contentArea = document.querySelector('.content') as HTMLElement;
+    const titlePage = document.querySelector('.title-page') as HTMLElement;
+    const footerTemplate = document.getElementById('footerTemplate');
+    const headerOriginal = document.getElementById('headerOriginal');
+    
+    if (!previewPage || !contentArea || !titlePage) return;
+
+    // 1. Clean up existing markers
+    document.querySelectorAll('.preview-spacer').forEach(el => el.remove());
+    document.querySelectorAll('.generated-marker').forEach(el => el.remove());
+
+    // 2. Determine page height
+    // We'll use a fixed mapping or look for a marker if we had one.
+    // For now, let's look at the title-page height which we set to calc(pageHeight - 60px)
+    const titlePageHeight = titlePage.offsetHeight;
+    const pageHeightPx = titlePageHeight + 60; // Restore the 60px top padding to get full height
+
+    console.info(`DEBUG: setupPreviewPageMarkers - pageHeightPx: ${pageHeightPx}`);
+
+    const getFooterHtml = (pageNumber: number) => {
+      if (!footerTemplate) return '';
+      let html = footerTemplate.innerHTML;
+      return html.replace(/<span class="pageNumber"><\/span>/g, pageNumber.toString());
+    };
+
+    const getHeaderHtml = () => {
+      return headerOriginal ? headerOriginal.innerHTML : '';
+    };
+
+    // 3. Create spacer after Title Page (Page 1 -> Page 2)
+    const firstSpacer = document.createElement('div');
+    firstSpacer.className = 'preview-spacer';
+    firstSpacer.innerHTML = `
+      <div class="spacer-footer">${getFooterHtml(1)}</div>
+      <div class="spacer-line"></div>
+      <div class="spacer-header">${getHeaderHtml()}</div>
+    `;
+    titlePage.after(firstSpacer);
+
+    // 4. Iterate through content and insert spacers
+    let currentPage = 2;
+    let currentAccumulatedHeight = 0;
+    // The first element of content starts at the top of Page 2.
+    // We want to avoid exceeding (pageHeightPx - 60px - 80px) of actual content per page
+    // to account for the header (60px) and footer (80px) space.
+    const maxContentHeightPerPage = pageHeightPx - 140; 
+
+    const children = Array.from(contentArea.children);
+    for (const child of children) {
+      const childHeight = (child as HTMLElement).offsetHeight;
+      
+      // If this single element is taller than a whole page, we can't do much without splitting it,
+      // but we'll at least put it on its own page.
+      if (currentAccumulatedHeight + childHeight > maxContentHeightPerPage && currentAccumulatedHeight > 0) {
+        // Insert spacer before this element
+        const spacer = document.createElement('div');
+        spacer.className = 'preview-spacer';
+        spacer.innerHTML = `
+          <div class="spacer-footer">${getFooterHtml(currentPage)}</div>
+          <div class="spacer-line"></div>
+          <div class="spacer-header">${getHeaderHtml()}</div>
+        `;
+        child.before(spacer);
+        
+        currentPage++;
+        currentAccumulatedHeight = 0;
+      }
+      
+      currentAccumulatedHeight += childHeight;
+    }
+
+    // 5. Add final footer
+    const finalFooter = document.createElement('div');
+    finalFooter.className = 'footer generated-marker';
+    finalFooter.style.position = 'relative';
+    finalFooter.style.marginTop = '40px';
+    finalFooter.innerHTML = getFooterHtml(currentPage);
+    contentArea.appendChild(finalFooter);
   }
 
   // Handle incoming messages (Single Global Listener)

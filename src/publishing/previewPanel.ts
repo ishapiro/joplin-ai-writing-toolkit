@@ -30,6 +30,8 @@ export function getPreviewPanelHtml(htmlContent: string): string {
         align-items: center;
         border-bottom: 1px solid #ddd;
         flex-shrink: 0;
+        position: relative;
+        z-index: 10;
       }
       .preview-header h3 { margin: 0; font-size: 16px; }
       .preview-actions { display: flex; gap: 10px; }
@@ -53,16 +55,21 @@ export function getPreviewPanelHtml(htmlContent: string): string {
       
       .preview-body {
         flex: 1;
-        overflow: auto;
+        overflow-y: auto;
         padding: 20px;
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+        background: #f0f0f0;
       }
       #previewContentHolder {
         background: white;
         box-shadow: 0 0 10px rgba(0,0,0,0.1);
         width: 100%;
         max-width: 850px;
+        margin-bottom: 100px;
+        flex-shrink: 0;
+        position: relative; /* Contain absolute headers/footers */
         min-height: 100%;
       }
     </style>
