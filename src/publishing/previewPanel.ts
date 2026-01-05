@@ -2,7 +2,14 @@ export function getPreviewPanelHtml(htmlContent: string): string {
   return `
     <div class="preview-container">
       <div class="preview-header">
-        <h3>PDF Preview</h3>
+        <div class="header-left">
+          <h3>PDF Preview</h3>
+          <div class="pagination-controls" id="paginationControls" style="display: none; margin-left: 20px;">
+            <button class="nav-button" id="prevPage" title="Previous Page">◀</button>
+            <span id="pageInfo">Page 1 of 1</span>
+            <button class="nav-button" id="nextPage" title="Next Page">▶</button>
+          </div>
+        </div>
         <div class="preview-actions">
           <button class="action-button" id="refreshButton">Refresh</button>
           <button class="action-button" id="printButton">Print PDF</button>
@@ -35,7 +42,28 @@ export function getPreviewPanelHtml(htmlContent: string): string {
         z-index: 10;
       }
       .preview-header h3 { margin: 0; font-size: 16px; }
+      .header-left { display: flex; align-items: center; }
       .preview-actions { display: flex; gap: 10px; }
+      
+      .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #eee;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 13px;
+      }
+      .nav-button {
+        background: none;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        cursor: pointer;
+        padding: 0 6px;
+        font-size: 12px;
+      }
+      .nav-button:hover { background: #ddd; }
+      .nav-button:disabled { opacity: 0.3; cursor: default; }
       
       .action-button {
         padding: 5px 15px;
@@ -56,20 +84,21 @@ export function getPreviewPanelHtml(htmlContent: string): string {
       
       .preview-body {
         flex: 1;
-        overflow-y: auto;
-        padding: 40px;
+        overflow: hidden; /* No more body scrolling */
+        padding: 20px;
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center; /* Center the single page */
         background: #e0e0e0;
       }
       #previewContentHolder {
         width: auto;
+        height: auto;
         flex-shrink: 0;
         position: relative;
-        transform-origin: top center;
+        transform-origin: center center; /* Scale from middle for single page */
         transition: transform 0.2s ease-out;
-        margin-bottom: 50px;
       }
       
       @media print {

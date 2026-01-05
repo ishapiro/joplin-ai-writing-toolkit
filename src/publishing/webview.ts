@@ -10,6 +10,10 @@
 
   console.log('Publishing toolkit script active.');
 
+  let currentPageIndex = 0;
+  let totalPages = 0;
+  let isInternalChange = false;
+
   // This function binds all listeners based on what's currently in the DOM
   function bindListeners() {
     console.log('bindListeners: Checking DOM...');
@@ -75,11 +79,21 @@
     if (closePreviewBtn) {
       console.log('bindListeners: Preview mode detected.');
       
-      // Fragment content into virtual pages and scale to fit
-      setTimeout(() => {
-        fragmentContentIntoPages();
-        scalePreviewToFit();
-      }, 100);
+      // Only fragment if content is truly new (prevents loop)
+      const pageContainer = document.getElementById('pageContainer');
+      const alreadyFragmented = pageContainer && pageContainer.querySelectorAll('.virtual-page').length > 1;
+
+      if (!alreadyFragmented) {
+        console.info('DEBUG: Fresh preview detected. Fragmenting...');
+        currentPageIndex = 0; 
+        setTimeout(() => {
+          fragmentContentIntoPages();
+          scalePreviewToFit();
+        }, 100);
+      } else {
+        // Just refresh the view in case buttons were re-bound
+        updatePageView();
+      }
 
       window.onresize = () => scalePreviewToFit();
 
@@ -100,9 +114,17 @@
       if (printBtn) {
         printBtn.onclick = () => {
           console.info('DEBUG: printButton clicked. Triggering window.print().');
+          // Show all pages for printing
+          showAllPagesForPrint();
           window.print();
         };
       }
+
+      const prevBtn = document.getElementById('prevPage');
+      if (prevBtn) prevBtn.onclick = () => changePage(-1);
+
+      const nextBtn = document.getElementById('nextPage');
+      if (nextBtn) nextBtn.onclick = () => changePage(1);
 
       // Reset print state after dialog closes (Strategy B from Electron docs)
       window.onafterprint = () => {
@@ -112,7 +134,46 @@
     }
   }
 
+  function changePage(delta: number) {
+    const newIndex = currentPageIndex + delta;
+    if (newIndex >= 0 && newIndex < totalPages) {
+      isInternalChange = true;
+      currentPageIndex = newIndex;
+      updatePageView();
+      setTimeout(() => { isInternalChange = false; }, 50);
+    }
+  }
+
+  function updatePageView() {
+    const pages = document.querySelectorAll('#pageContainer .virtual-page');
+    pages.forEach((p, idx) => {
+      (p as HTMLElement).style.display = (idx === currentPageIndex) ? 'block' : 'none';
+      (p as HTMLElement).style.marginBottom = '0'; 
+    });
+
+    const info = document.getElementById('pageInfo');
+    if (info) info.textContent = `Page ${currentPageIndex + 1} of ${totalPages}`;
+
+    const prevBtn = document.getElementById('prevPage') as HTMLButtonElement;
+    const nextBtn = document.getElementById('nextPage') as HTMLButtonElement;
+    if (prevBtn) prevBtn.disabled = (currentPageIndex === 0);
+    if (nextBtn) nextBtn.disabled = (currentPageIndex === totalPages - 1);
+
+    scalePreviewToFit();
+  }
+
+  function showAllPagesForPrint() {
+    const pages = document.querySelectorAll('#pageContainer .virtual-page');
+    pages.forEach((p) => {
+      (p as HTMLElement).style.display = 'block';
+      (p as HTMLElement).style.marginBottom = '20px';
+    });
+    const holder = document.getElementById('previewContentHolder');
+    if (holder) holder.style.transform = 'none';
+  }
+
   function fragmentContentIntoPages() {
+    isInternalChange = true;
     const source = document.getElementById('contentSource');
     const container = document.getElementById('pageContainer');
     const template = document.getElementById('pageTemplate') as HTMLTemplateElement;
@@ -159,7 +220,15 @@
       }
     }
     
-    console.info(`DEBUG: Fragmented into ${currentPageNum - 1} pages.`);
+    totalPages = currentPageNum - 1;
+    // currentPageIndex is NO LONGER reset to 0 here to preserve state
+
+    const controls = document.getElementById('paginationControls');
+    if (controls) controls.style.display = totalPages > 1 ? 'flex' : 'none';
+
+    updatePageView();
+    console.info(`DEBUG: Fragmented into ${totalPages} pages.`);
+    setTimeout(() => { isInternalChange = false; }, 50);
   }
 
   function scalePreviewToFit() {
@@ -167,19 +236,22 @@
     const body = document.getElementById('previewBody');
     if (!holder || !body) return;
 
-    // The A4 page width in pixels (approx)
+    // The A4 page width/height in pixels (approx)
     const pageWidth = 210 * 3.78; 
-    const padding = 80; // 40px each side
-    const availableWidth = body.offsetWidth - padding;
-    
-    if (availableWidth <= 0) return;
+    const pageHeight = 297 * 3.78;
 
-    const scale = Math.min(1, availableWidth / pageWidth);
-    holder.style.transform = `scale(${scale})`;
+    const padding = 40; 
+    const availableWidth = body.offsetWidth - padding;
+    const availableHeight = body.offsetHeight - padding;
     
-    // Adjust height of the holder so scrolling works correctly
-    const originalHeight = holder.scrollHeight;
-    body.style.minHeight = `${(originalHeight * scale) + padding}px`;
+    if (availableWidth <= 0 || availableHeight <= 0) return;
+
+    // Scale to fit BOTH width and height for a single page
+    const scaleX = availableWidth / pageWidth;
+    const scaleY = availableHeight / pageHeight;
+    const scale = Math.min(1, scaleX, scaleY);
+
+    holder.style.transform = `scale(${scale})`;
     
     console.info(`DEBUG: Scaled preview to ${Math.round(scale * 100)}%`);
   }
@@ -209,6 +281,7 @@
 
   // MutationObserver detects when setHtml replaces the panel content
   const observer = new MutationObserver(() => {
+    if (isInternalChange) return;
     bindListeners();
   });
   observer.observe(document.body, { childList: true, subtree: true });
