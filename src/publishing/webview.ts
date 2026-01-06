@@ -151,9 +151,10 @@
       if (nextBtn) nextBtn.onclick = () => changePage(1);
 
       // Reset print state after dialog closes (Strategy B from Electron docs)
+      // Per user request: Return to settings panel after print instead of refreshing preview
       window.onafterprint = () => {
-        console.info('DEBUG: Afterprint event detected. Requesting refresh.');
-        (window as any).webviewApi.postMessage({ type: 'refreshPreview' });
+        console.info('DEBUG: Afterprint event detected. Returning to settings.');
+        (window as any).webviewApi.postMessage({ type: 'closePreview' });
       };
     }
   }
