@@ -2,8 +2,10 @@
   "name": "joplin-plugin-ai-writing-toolkit",
   "version": "1.0.0-beta",
   "scripts": {
-    "dist": "webpack --env joplin-plugin-config=buildMain && webpack --env joplin-plugin-config=buildExtraScripts && webpack --env joplin-plugin-config=createArchive",
-    "prepare": "npm run dist",
+    "build": "webpack --env joplin-plugin-config=buildMain && webpack --env joplin-plugin-config=buildExtraScripts && webpack --env joplin-plugin-config=createArchive",
+    "install-plugin": "node install-plugin.js",
+    "dist": "npm run build && npm run install-plugin",
+    "postinstall": "npm run build",
     "updateVersion": "webpack --env joplin-plugin-config=updateVersion",
     "update": "npm install -g generator-joplin && yo joplin --node-package-manager npm --update --force"
   },
