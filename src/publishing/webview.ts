@@ -9,6 +9,8 @@
   (window as any).__publishingWebviewInitialized = true;
 
   console.log('Publishing toolkit script active.');
+  console.log('DEBUG: PDF Publishing Panel - webview.js loaded successfully');
+  console.log('DEBUG: Include Title Page checkbox support: ENABLED');
 
   let currentPageIndex = 0;
   let totalPages = 0;
@@ -17,6 +19,7 @@
   // This function binds all listeners based on what's currently in the DOM
   function bindListeners() {
     console.log('bindListeners: Checking DOM...');
+    console.log('DEBUG: bindListeners - Checking for includeTitlePage checkbox...');
 
     // 1. Settings Mode Elements
     const previewButton = document.getElementById('previewButton');
@@ -26,13 +29,26 @@
         title: 'docTitle', subtitle: 'docSubtitle', author: 'docAuthor', 
         date: 'docDate', logo: 'docLogo', page_size: 'pageSize', 
         margin: 'pageMargin', header: 'headerText', footer: 'footerText', 
-        show_page_numbers: 'showPageNumbers'
+        show_page_numbers: 'showPageNumbers', include_title_page: 'includeTitlePage'
       };
+      
+      console.log('DEBUG: Settings mode detected - inputIds:', inputIds);
+      
+      const includeTitlePageCheckbox = document.getElementById('includeTitlePage');
+      if (includeTitlePageCheckbox) {
+        console.log('DEBUG: ✓ Include Title Page checkbox FOUND in DOM');
+        console.log('DEBUG: Checkbox element:', includeTitlePageCheckbox);
+        console.log('DEBUG: Checkbox checked state:', (includeTitlePageCheckbox as HTMLInputElement).checked);
+      } else {
+        console.error('DEBUG: ✗ Include Title Page checkbox NOT FOUND in DOM!');
+        console.error('DEBUG: Available elements in Title Page section:', 
+          document.querySelector('.settings-group h4')?.textContent);
+      }
 
       const getSettings = () => {
         const getVal = (id: string) => (document.getElementById(id) as HTMLInputElement)?.value || '';
         const getCheck = (id: string) => (document.getElementById(id) as HTMLInputElement)?.checked || false;
-        return {
+        const settings = {
           title: getVal(inputIds.title),
           subtitle: getVal(inputIds.subtitle),
           author: getVal(inputIds.author),
@@ -42,8 +58,11 @@
           margin: getVal(inputIds.margin),
           header: getVal(inputIds.header),
           footer: getVal(inputIds.footer),
-          show_page_numbers: getCheck(inputIds.show_page_numbers)
+          show_page_numbers: getCheck(inputIds.show_page_numbers),
+          include_title_page: getCheck(inputIds.include_title_page)
         };
+        console.log('DEBUG: getSettings() called - include_title_page:', settings.include_title_page);
+        return settings;
       };
 
       previewButton.onclick = () => {
@@ -53,16 +72,28 @@
       const refreshBtn = document.getElementById('refreshButton');
       if (refreshBtn) refreshBtn.onclick = () => (window as any).webviewApi.postMessage({ type: 'refreshFromNote' });
 
-      const closeBtn = document.getElementById('closeButton');
-      if (closeBtn) closeBtn.onclick = () => (window as any).webviewApi.postMessage({ type: 'closePublishingPanel' });
-
-      const helpBtn = document.getElementById('helpButton');
-      if (helpBtn) {
-        helpBtn.onclick = () => {
-          const modal = document.getElementById('help-modal');
-          if (modal) modal.style.display = 'block';
+      const closePanelBtn = document.getElementById('closePanelButton');
+      if (closePanelBtn) {
+        closePanelBtn.onclick = async () => {
+          try {
+            await (window as any).webviewApi.postMessage({ type: 'closePanel' });
+            console.log('Close panel requested');
+          } catch (error) {
+            console.error('Error closing panel:', error);
+          }
         };
       }
+
+      // Bind action buttons (like Help button)
+      document.querySelectorAll('.action-button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const action = btn.getAttribute('data-action') || '';
+          if (action === 'showHelp') {
+            const modal = document.getElementById('help-modal');
+            if (modal) modal.style.display = 'block';
+          }
+        });
+      });
 
       const closeHelpBtn = document.getElementById('close-help-modal');
       if (closeHelpBtn) {
@@ -210,7 +241,8 @@
     if (titlePage) container.appendChild(titlePage);
 
     const children = Array.from(source.children);
-    let currentPageNum = 2;
+    // Start page numbering at 2 if title page exists, otherwise start at 1
+    let currentPageNum = titlePage ? 2 : 1;
 
     const createNewPage = () => {
       const clone = template.content.cloneNode(true) as HTMLElement;
@@ -349,6 +381,97 @@
     console.info(`DEBUG: Scaled preview to ${Math.round(scale * 100)}% on page ${currentPageIndex + 1}`);
   }
 
+  // Function to show a nicely formatted close message
+  function showCloseMessage() {
+    const settingsScrollArea = document.querySelector('.settings-scroll-area');
+    if (!settingsScrollArea) return;
+
+    // Clear the settings area and show a formatted close message
+    settingsScrollArea.innerHTML = '';
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      text-align: center;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 8px;
+      margin: 20px;
+      border: 1px solid #28a745;
+      min-height: 200px;
+    `;
+    
+    messageDiv.innerHTML = `
+      <p style="color: #495057; font-size: 14px; margin-bottom: 15px;">To reopen this panel:</p>
+      <div style="color: #495057; font-size: 13px; line-height: 1.4; margin-bottom: 20px;">
+        <strong>1.</strong> Select <strong>Tools</strong> from the menu bar<br>
+        <strong>2.</strong> Click <strong>Cogitations Plugins</strong><br>
+        <strong>3.</strong> Select <strong>PDF Publishing Settings</strong>
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button id="confirmCloseButton" style="padding: 8px 16px; border: none; border-radius: 4px; font-size: 13px; cursor: pointer; background: #28a745; color: white; font-weight: 500;">Close Panel</button>
+        <button id="cancelCloseButton" style="padding: 8px 16px; border: none; border-radius: 4px; font-size: 13px; cursor: pointer; background: #6c757d; color: white; font-weight: 500;">Keep Open</button>
+      </div>
+    `;
+    
+    settingsScrollArea.appendChild(messageDiv);
+    
+    // Add event listeners for the buttons
+    const confirmBtn = document.getElementById('confirmCloseButton');
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', async () => {
+        try {
+          await (window as any).webviewApi.postMessage({
+            type: 'confirmClose'
+          });
+        } catch (error) {
+          console.error('Error confirming close:', error);
+        }
+      });
+      
+      // Add hover effects
+      confirmBtn.addEventListener('mouseenter', () => {
+        (confirmBtn as HTMLElement).style.background = '#218838';
+        (confirmBtn as HTMLElement).style.transform = 'translateY(-1px)';
+        (confirmBtn as HTMLElement).style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+      });
+      confirmBtn.addEventListener('mouseleave', () => {
+        (confirmBtn as HTMLElement).style.background = '#28a745';
+        (confirmBtn as HTMLElement).style.transform = 'translateY(0)';
+        (confirmBtn as HTMLElement).style.boxShadow = 'none';
+      });
+    }
+    
+    const cancelBtn = document.getElementById('cancelCloseButton');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', async () => {
+        try {
+          // Reload the panel HTML to restore settings
+          await (window as any).webviewApi.postMessage({
+            type: 'cancelClose'
+          });
+        } catch (error) {
+          console.error('Error canceling close:', error);
+        }
+      });
+      
+      // Add hover effects
+      cancelBtn.addEventListener('mouseenter', () => {
+        (cancelBtn as HTMLElement).style.background = '#5a6268';
+        (cancelBtn as HTMLElement).style.transform = 'translateY(-1px)';
+        (cancelBtn as HTMLElement).style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+      });
+      cancelBtn.addEventListener('mouseleave', () => {
+        (cancelBtn as HTMLElement).style.background = '#6c757d';
+        (cancelBtn as HTMLElement).style.transform = 'translateY(0)';
+        (cancelBtn as HTMLElement).style.boxShadow = 'none';
+      });
+    }
+  }
+
   // Handle incoming messages (Single Global Listener)
   if (typeof (window as any).webviewApi !== 'undefined') {
     (window as any).webviewApi.onMessage((message: any) => {
@@ -368,6 +491,10 @@
         setVal('headerText', s.header);
         setVal('footerText', s.footer);
         setCheck('showPageNumbers', s.show_page_numbers !== false);
+        setCheck('includeTitlePage', s.include_title_page !== false);
+        console.log('DEBUG: updatePanelFields - include_title_page value:', s.include_title_page, 'checkbox checked:', (document.getElementById('includeTitlePage') as HTMLInputElement)?.checked);
+      } else if (actualMessage.type === 'showCloseMessage') {
+        showCloseMessage();
       }
     });
   }

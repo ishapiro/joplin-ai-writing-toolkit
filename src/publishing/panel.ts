@@ -4,10 +4,10 @@ export function getPublishingPanelHtml(): string {
     <div class="chat-container">
       <div class="chat-header">
         <h3>PDF Publishing Settings</h3>
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <button class="help-link" id="helpButton" title="Help & Documentation">❓ Help</button>
-          <button class="close-button" id="closeButton" title="Close Panel">✕</button>
-        </div>
+      </div>
+      
+      <div class="quick-actions">
+        <button class="action-button" data-action="showHelp" title="Help & Documentation">ℹ️ Help</button>
       </div>
       
       <div class="settings-scroll-area">
@@ -32,6 +32,10 @@ export function getPublishingPanelHtml(): string {
           <div class="form-group">
             <label class="input-label">Logo URL/Path</label>
             <input type="text" id="docLogo" class="text-input" placeholder="Image resource ID or URL">
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="includeTitlePage" checked>
+            <label for="includeTitlePage" class="input-label" style="margin-bottom: 0;">Include Title Page</label>
           </div>
         </div>
 
@@ -70,6 +74,7 @@ export function getPublishingPanelHtml(): string {
       </div>
 
       <div class="actions-container">
+        <button id="closePanelButton" class="close-panel-button">Close</button>
         <button id="refreshButton" class="secondary-button">Refresh from Note</button>
         <button id="previewButton" class="primary-button">Generate Preview</button>
       </div>
@@ -135,6 +140,41 @@ export function getPublishingPanelHtml(): string {
         align-items: center;
         flex-shrink: 0;
       }
+      
+      .quick-actions {
+        display: flex;
+        gap: 4px;
+        padding: 8px;
+        background: #f5f5f5;
+        border-bottom: 1px solid #e8e8e8;
+        flex-shrink: 0;
+      }
+
+      .action-button {
+        padding: 6px 8px;
+        border: 1px solid #4a4a4a;
+        border-radius: 4px;
+        background: #ffffff;
+        color: #2c2c2c;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        white-space: nowrap;
+      }
+
+      .action-button:hover {
+        background: #4a4a4a;
+        color: #ffffff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      .action-button:active {
+        background: #3a3a3a;
+        color: #ffffff;
+        transform: translateY(1px);
+      }
 
       .chat-header h3 {
         margin: 0;
@@ -144,38 +184,6 @@ export function getPublishingPanelHtml(): string {
         letter-spacing: -0.01em;
       }
 
-      .close-button {
-        background: transparent;
-        color: #666666;
-        border: none;
-        font-size: 18px;
-        cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 4px;
-        transition: all 0.2s ease;
-      }
-
-      .close-button:hover {
-        background: rgba(0, 0, 0, 0.1);
-        color: #333333;
-      }
-
-      .help-link {
-        background: transparent;
-        color: #0066cc;
-        border: 1px solid #0066cc;
-        font-size: 13px;
-        cursor: pointer;
-        padding: 4px 10px;
-        border-radius: 4px;
-        transition: all 0.2s ease;
-        font-weight: 500;
-      }
-
-      .help-link:hover {
-        background: #0066cc;
-        color: white;
-      }
 
       .settings-scroll-area {
         flex: 1;
@@ -250,17 +258,18 @@ export function getPublishingPanelHtml(): string {
       }
 
       .actions-container {
-        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 0 16px 16px;
         background: #ffffff;
         border-top: 1px solid #e0e0e0;
         flex-shrink: 0;
-        display: flex;
-        gap: 10px;
       }
 
       .primary-button, .secondary-button {
         flex: 1;
-        padding: 10px 24px;
+        padding: 8px 24px;
         border: none;
         border-radius: 6px;
         font-weight: 600;
@@ -298,6 +307,23 @@ export function getPublishingPanelHtml(): string {
 
       .secondary-button:active {
         transform: translateY(0);
+      }
+
+      .close-panel-button {
+        padding: 8px 16px;
+        background: transparent;
+        color: #666;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .close-panel-button:hover {
+        background: #f5f5f5;
+        color: #333;
+        border-color: #999;
       }
 
       /* Scrollbar styling */

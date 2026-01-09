@@ -54,6 +54,7 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
   const header = settings.header || '';
   const footer = settings.footer || '';
   const showPageNumbers = settings.showPageNumbers !== false;
+  const includeTitlePage = settings.includeTitlePage !== false;
 
   const pageSizeCSS = pageSize === 'A4' ? 'A4' : 'letter';
   const pageWidth = pageSize === 'A4' ? '210mm' : '8.5in';
@@ -147,7 +148,8 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
   <div class="preview-page">
     <div id="contentSource">${htmlContent}</div>
     <div id="pageContainer">
-      <!-- Title Page (Always first) -->
+      ${includeTitlePage ? `
+      <!-- Title Page (Only if includeTitlePage is true) -->
       <div class="virtual-page" id="titlePageContainer">
         <div class="title-page">
           ${logo ? `<img src="${logo}" style="max-width: 200px; margin-bottom: 20px;" />` : ''}
@@ -165,6 +167,7 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
           </div>
         ` : ''}
       </div>
+      ` : ''}
     </div>
 
     <!-- Templates for Fragmented Pages -->

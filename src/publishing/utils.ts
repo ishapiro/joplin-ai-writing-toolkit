@@ -11,6 +11,7 @@ export interface PublishingSettings {
   header?: string;
   footer?: string;
   showPageNumbers?: boolean;
+  includeTitlePage?: boolean;
 }
 
 export function parseFrontMatter(body: string): PublishingSettings {
@@ -30,7 +31,8 @@ export function parseFrontMatter(body: string): PublishingSettings {
       margin: result.margin,
       header: result.header,
       footer: result.footer,
-      showPageNumbers: result.showPageNumbers !== undefined ? result.showPageNumbers : result.show_page_numbers
+      showPageNumbers: result.showPageNumbers !== undefined ? result.showPageNumbers : result.show_page_numbers,
+      includeTitlePage: result.includeTitlePage !== undefined ? result.includeTitlePage : (result.include_title_page !== undefined ? result.include_title_page : true)
     };
   } catch (e) {
     console.error('Failed to parse front matter', e);
@@ -50,7 +52,8 @@ export function webviewToPluginSettings(webviewSettings: any): PublishingSetting
     margin: webviewSettings.margin,
     header: webviewSettings.header,
     footer: webviewSettings.footer,
-    showPageNumbers: webviewSettings.show_page_numbers
+    showPageNumbers: webviewSettings.show_page_numbers,
+    includeTitlePage: webviewSettings.include_title_page !== undefined ? webviewSettings.include_title_page : true
   };
 }
 
@@ -66,7 +69,8 @@ export function pluginToWebviewSettings(pluginSettings: PublishingSettings): any
     margin: pluginSettings.margin,
     header: pluginSettings.header,
     footer: pluginSettings.footer,
-    show_page_numbers: pluginSettings.showPageNumbers
+    show_page_numbers: pluginSettings.showPageNumbers,
+    include_title_page: pluginSettings.includeTitlePage !== undefined ? pluginSettings.includeTitlePage : true
   };
 }
 
