@@ -5,6 +5,7 @@ import { getPanelHtml } from './panel';
 import { getPublishingPanelHtml } from './publishing/panel';
 import { parseFrontMatter, updateFrontMatter, webviewToPluginSettings, pluginToWebviewSettings } from './publishing/utils';
 import { generatePreviewHtml } from './publishing/preview';
+import { getOptionsDialogHtml } from './optionsDialog';
 import { getPreviewPanelHtml } from './publishing/previewPanel';
 import { PanelHandler } from './handlers';
 import { MenuItemLocation } from './types';
@@ -37,6 +38,7 @@ joplin.plugins.register({
       let publishingPanel: any = null;
       let isPreviewMode = false;
       let modelOptions: string = '';
+      let optionsDialog: any = null;
       
       // Lazy initialization function for Chat Panel
       const ensureChatPanel = async () => {
@@ -270,6 +272,112 @@ joplin.plugins.register({
         },
       });
 
+      // Register command to open options dialog
+      await joplin.commands.register({
+        name: 'openOptionsDialog',
+        label: 'Options',
+        iconName: 'fas fa-cog',
+        execute: async () => {
+          try {
+            // Lazy initialize dialog
+            if (!optionsDialog) {
+              optionsDialog = await joplin.views.dialogs.create('optionsDialog');
+              // Load dialog JS (inline <script> is not reliably executed in Joplin dialogs)
+              await joplin.views.dialogs.addScript(optionsDialog, './optionsDialogWebview.js');
+            }
+            
+            // Load current settings
+            const systemPromptContent = await chatGPTAPI.loadSystemPromptFromFile();
+            const currentSettings = {
+              openaiApiKey: await joplin.settings.value('openaiApiKey') || '',
+              openaiModel: await joplin.settings.value('openaiModel') || '',
+              maxTokens: await joplin.settings.value('maxTokens') || 1000,
+              autoSave: await joplin.settings.value('autoSave') !== false,
+              reasoningEffort: await joplin.settings.value('reasoningEffort') || 'low',
+              verbosity: await joplin.settings.value('verbosity') || 'low',
+              systemPromptFile: await joplin.settings.value('systemPromptFile') || '',
+              systemPromptContent: systemPromptContent || '',
+              pluginVersion: await joplin.settings.value('pluginVersion') || '',
+            };
+            
+            // Load model options for dropdown
+            let modelOptionsForDialog: {[key: string]: string} = {};
+            try {
+              const storedModelsStr = await joplin.settings.value('modelCache');
+              if (storedModelsStr) {
+                const models = JSON.parse(storedModelsStr);
+                modelOptionsForDialog[''] = '(Auto-select latest general model)';
+                models.forEach((model: any) => {
+                  const displayName = model.id === 'gpt-5.1' ? 'GPT-5.1 (Latest)' : 
+                                     model.id.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+                  modelOptionsForDialog[model.id] = displayName;
+                });
+              } else {
+                modelOptionsForDialog[''] = '(Auto-select latest general model)';
+              }
+            } catch (e) {
+              modelOptionsForDialog[''] = '(Auto-select latest general model)';
+            }
+            
+            // Set dialog HTML
+            const dialogHtml = getOptionsDialogHtml(currentSettings, modelOptionsForDialog);
+            await joplin.views.dialogs.setHtml(optionsDialog, dialogHtml);
+            
+            // Set dialog buttons
+            await joplin.views.dialogs.setButtons(optionsDialog, [
+              { id: 'cancel', title: 'Cancel' },
+              { id: 'save', title: 'Save' }
+            ]);
+            
+            // Set dialog to not fit content so we can control the width via CSS
+            await joplin.views.dialogs.setFitToContent(optionsDialog, false);
+            
+            // Open dialog and wait for result
+            const result = await joplin.views.dialogs.open(optionsDialog);
+            
+            // Handle result - formData contains all form values when Save is clicked
+            if (result.id === 'save' && result.formData) {
+              const formData = result.formData;
+              
+              // Save all settings using the same storage mechanism
+              await joplin.settings.setValue('openaiApiKey', formData.openaiApiKey || '');
+              await joplin.settings.setValue('openaiModel', formData.openaiModel || '');
+              await joplin.settings.setValue('maxTokens', parseInt(formData.maxTokens) || 1000);
+              // Checkbox: 'on' when checked, undefined when unchecked
+              await joplin.settings.setValue('autoSave', formData.autoSave === 'on' || formData.autoSave === true || formData.autoSave === 'true');
+              await joplin.settings.setValue('reasoningEffort', formData.reasoningEffort || 'low');
+              await joplin.settings.setValue('verbosity', formData.verbosity || 'low');
+
+              // Save system prompt (if present)
+              if (typeof formData.systemPromptContent !== 'undefined') {
+                try {
+                  const fs = require('fs');
+                  const promptFile = await chatGPTAPI.getSystemPromptFilePath();
+                  fs.writeFileSync(promptFile, String(formData.systemPromptContent ?? ''), 'utf8');
+                  await joplin.settings.setValue('systemPromptFile', promptFile);
+                } catch (promptError: any) {
+                  console.error('Error saving system prompt file:', promptError);
+                  // Don't fail the whole save
+                }
+              }
+              
+              // Mark model as user-set if they changed it
+              if (formData.openaiModel) {
+                await joplin.settings.setValue('openaiModelUserSet', true);
+              }
+              
+              // Reload API settings
+              await chatGPTAPI.loadSettings();
+              
+              await joplin.views.dialogs.showMessageBox('Settings saved successfully!');
+            }
+          } catch (error: any) {
+            console.error('Error opening options dialog:', error);
+            await joplin.views.dialogs.showMessageBox(`Error opening options dialog: ${error.message}`);
+          }
+        },
+      });
+
       await joplin.workspace.onNoteSelectionChange(async () => {
         if (publishingPanel) {
           const isVisible = await joplin.views.panels.visible(publishingPanel);
@@ -300,6 +408,7 @@ joplin.plugins.register({
         { commandName: 'openPublishingPanel', label: 'PDF Publishing Settings' },
         { commandName: 'openSystemPromptFile', label: 'Edit System Prompt' },
         { commandName: 'insertNoteBlock', label: 'Insert Note Block', accelerator: 'CmdOrCtrl+Shift+3' },
+        { commandName: 'openOptionsDialog', label: 'Options' },
       ], MenuItemLocation.Tools);
 
     } catch (error: any) {

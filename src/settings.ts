@@ -85,7 +85,7 @@ export async function registerPluginSettings(): Promise<void> {
         value: '',
         type: SettingItemType.String,
         label: 'OpenAI API Key',
-        description: 'Your OpenAI API key for ChatGPT access. Get one from https://platform.openai.com/api-keys',
+        description: 'Your OpenAI API key for ChatGPT access. Get one from https://platform.openai.com/api-keys. To configure advanced options, click the icon in the toolbar or go to Tools > Cogitations Plugins > Options.',
         public: true,
         section: 'chatgptToolkit',
       },
@@ -93,7 +93,7 @@ export async function registerPluginSettings(): Promise<void> {
         value: '',
         type: SettingItemType.String,
         label: 'OpenAI Model',
-        description: 'Select a model from the dropdown, or choose "(Auto-select latest general model)" to automatically use the newest general model. Models are filtered to gpt-4o and newer.',
+        description: 'Select a model from the dropdown, or choose "(Auto-select latest general model)" to automatically use the newest general model. Models are filtered to gpt-4o and newer. To configure advanced options, click the icon in the toolbar or go to Tools > Cogitations Plugins > Options.',
         public: true,
         section: 'chatgptToolkit',
         options: settingsModelOptions,
@@ -102,7 +102,7 @@ export async function registerPluginSettings(): Promise<void> {
         value: 1000,
         type: SettingItemType.Int,
         label: 'Max Tokens',
-        description: 'Maximum number of tokens to generate in responses',
+        description: 'Maximum number of tokens to generate in responses. To configure advanced options, click the icon in the toolbar or go to Tools > Cogitations Plugins > Options.',
         public: true,
         section: 'chatgptToolkit',
       },
@@ -187,31 +187,41 @@ export async function registerPluginSettings(): Promise<void> {
 
   // Handle checkbox for opening system prompt file
   joplin.settings.onChange(async (event: any) => {
-    if (event.keys.includes('openSystemPromptFile')) {
-      const currentValue = await joplin.settings.value('openSystemPromptFile');
-      if (currentValue === true) {
-        try {
-          // Open the file
-          await joplin.commands.execute('openSystemPromptFile');
-          
-          // Update the path display after opening (file may have been created)
+    try {
+      if (event.keys && event.keys.includes('openSystemPromptFile')) {
+        const currentValue = await joplin.settings.value('openSystemPromptFile');
+        if (currentValue === true) {
           try {
-            const chatGPTAPI = new ChatGPTAPI();
-            const actualPath = await chatGPTAPI.getSystemPromptFilePath();
-            if (actualPath) {
-              await joplin.settings.setValue('systemPromptFile', actualPath);
+            // Open the file
+            await joplin.commands.execute('openSystemPromptFile');
+            
+            // Update the path display after opening (file may have been created)
+            try {
+              const chatGPTAPI = new ChatGPTAPI();
+              const actualPath = await chatGPTAPI.getSystemPromptFilePath();
+              if (actualPath) {
+                await joplin.settings.setValue('systemPromptFile', actualPath);
+              }
+            } catch (pathError: any) {
+              console.warn('Could not update system prompt file path after opening:', pathError);
             }
-          } catch (pathError: any) {
-            console.warn('Could not update system prompt file path after opening:', pathError);
+          } catch (error: any) {
+            console.error('Error opening system prompt file from settings:', error);
+            // Only show dialog if joplin.views is available (might not be during initialization)
+            try {
+              await joplin.views.dialogs.showMessageBox(
+                `Error opening system prompt file: ${error.message}\n\n` +
+                `You can also use the Command Palette (Ctrl+Shift+P / Cmd+Shift+P) and search for "Open System Prompt File".`
+              );
+            } catch (dialogError: any) {
+              console.error('Could not show error dialog:', dialogError);
+            }
           }
-        } catch (error: any) {
-          console.error('Error opening system prompt file from settings:', error);
-          await joplin.views.dialogs.showMessageBox(
-            `Error opening system prompt file: ${error.message}\n\n` +
-            `You can also use the Command Palette (Ctrl+Shift+P / Cmd+Shift+P) and search for "Open System Prompt File".`
-          );
         }
       }
+    } catch (error: any) {
+      // Catch any errors in the onChange handler to prevent crashes
+      console.error('Error in settings onChange handler:', error);
     }
   });
 
