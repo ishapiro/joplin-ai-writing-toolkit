@@ -45,7 +45,7 @@ export function getOptionsDialogHtml(
     .join('\n');
 
   return `
-    <form id="optionsForm">
+    <form id="optionsForm" name="optionsForm">
       <div class="options-container">
         <div class="options-header">
           <h3>AI Writing Toolkit Options</h3>
@@ -57,6 +57,10 @@ export function getOptionsDialogHtml(
             <div class="form-group">
               <label class="input-label">OpenAI API Key</label>
               <input type="password" id="openaiApiKey" name="openaiApiKey" class="text-input" value="${escapeHtml(settings.openaiApiKey || '')}" placeholder="sk-...">
+              <div class="checkbox-group" style="margin-top: 8px; margin-bottom: 0;">
+                <input type="checkbox" id="showApiKeyToggle">
+                <label for="showApiKeyToggle" class="input-label" style="margin-bottom: 0;">Show API key</label>
+              </div>
               <div class="help-text">Your OpenAI API key for ChatGPT access. Get one from <a href="https://platform.openai.com/api-keys" target="_blank">https://platform.openai.com/api-keys</a></div>
             </div>
             <div class="form-group">

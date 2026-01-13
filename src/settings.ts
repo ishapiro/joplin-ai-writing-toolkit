@@ -70,11 +70,39 @@ export async function registerPluginSettings(): Promise<void> {
   await joplin.settings.registerSection('chatgptToolkit', {
     label: 'AI Writing Toolkit',
     iconName: 'fas fa-robot',
-    description: `AI-powered writing assistant for Joplin. Version: ${pluginVersion} | Loaded: ${loadTimestamp} | Source: https://github.com/ishapiro/joplin-ai-writing-toolkit`
+    description: `Configure via Tools > Cogitations Plugins > Options. (OpenAI API key required)  |  Version: ${pluginVersion}  |  Loaded: ${loadTimestamp}`
   });
 
   try {
     await joplin.settings.registerSettings({
+      'configurationHelp': {
+        value: 'Use: Tools > Cogitations Plugins > Options',
+        type: SettingItemType.String,
+        label: 'Configuration (Read Me)',
+        description:
+          'This plugin is configured via the custom Options window.\n' +
+          '\n' +
+          'Open it here:\n' +
+          '  Tools > Cogitations Plugins > Options\n' +
+          '\n' +
+          'Required setup:\n' +
+          '  1) Create an OpenAI account\n' +
+          '  2) Generate an API key: https://platform.openai.com/api-keys\n' +
+          '  3) Paste the API key into the Options window\n' +
+          '\n' +
+          'If the plugin cannot connect, re-check the API key and your network connection.',
+        public: true,
+        section: 'chatgptToolkit',
+        readOnly: true,
+      },
+      'missingApiKeyNotified': {
+        value: false,
+        type: SettingItemType.Bool,
+        label: 'Missing API Key Notified',
+        description: 'Internal flag to avoid showing the missing API key warning repeatedly.',
+        public: false,
+        section: 'chatgptToolkit',
+      },
       'modelCache': {
         value: '',
         type: SettingItemType.String,
@@ -85,16 +113,16 @@ export async function registerPluginSettings(): Promise<void> {
         value: '',
         type: SettingItemType.String,
         label: 'OpenAI API Key',
-        description: 'Your OpenAI API key for ChatGPT access. Get one from https://platform.openai.com/api-keys. To configure advanced options, click the icon in the toolbar or go to Tools > Cogitations Plugins > Options.',
-        public: true,
+        description: 'Your OpenAI API key for ChatGPT access. Get one from https://platform.openai.com/api-keys',
+        public: false,
         section: 'chatgptToolkit',
       },
       'openaiModel': {
         value: '',
         type: SettingItemType.String,
         label: 'OpenAI Model',
-        description: 'Select a model from the dropdown, or choose "(Auto-select latest general model)" to automatically use the newest general model. Models are filtered to gpt-4o and newer. To configure advanced options, click the icon in the toolbar or go to Tools > Cogitations Plugins > Options.',
-        public: true,
+        description: 'Select a model from the dropdown, or choose "(Auto-select latest general model)" to automatically use the newest general model. Models are filtered to gpt-4o and newer.',
+        public: false,
         section: 'chatgptToolkit',
         options: settingsModelOptions,
       },
@@ -102,8 +130,8 @@ export async function registerPluginSettings(): Promise<void> {
         value: 1000,
         type: SettingItemType.Int,
         label: 'Max Tokens',
-        description: 'Maximum number of tokens to generate in responses. To configure advanced options, click the icon in the toolbar or go to Tools > Cogitations Plugins > Options.',
-        public: true,
+        description: 'Maximum number of tokens to generate in responses',
+        public: false,
         section: 'chatgptToolkit',
       },
       'openSystemPromptFile': {
@@ -111,7 +139,7 @@ export async function registerPluginSettings(): Promise<void> {
         type: SettingItemType.Bool,
         label: 'Open System Prompt File',
         description: 'To open the system prompt file: 1) Check this box, 2) Click "Apply", 3) The editor will open. After editing, uncheck the box and click "Apply" again. The file will be created with a default prompt if it doesn\'t exist. After editing, reload the plugin to use the new prompt.',
-        public: true,
+        public: false,
         section: 'chatgptToolkit',
       },
       'systemPromptFile': {
@@ -119,7 +147,7 @@ export async function registerPluginSettings(): Promise<void> {
         type: SettingItemType.String,
         label: 'System Prompt File Path',
         description: 'Full path to the system prompt file (shown below the button above).',
-        public: true,
+        public: false,
         section: 'chatgptToolkit',
         readOnly: true,
       },
@@ -136,7 +164,7 @@ export async function registerPluginSettings(): Promise<void> {
         type: SettingItemType.Bool,
         label: 'Auto-save Changes',
         description: 'Automatically save note changes after AI operations',
-        public: true,
+        public: false,
         section: 'chatgptToolkit',
       },
       'reasoningEffort': {
@@ -144,7 +172,7 @@ export async function registerPluginSettings(): Promise<void> {
         type: SettingItemType.String,
         label: 'Reasoning Effort',
         description: 'Controls depth of reasoning for GPT-5 and o-series models (low, medium, high)',
-        public: true,
+        public: false,
         section: 'chatgptToolkit',
       },
       'verbosity': {
@@ -152,7 +180,7 @@ export async function registerPluginSettings(): Promise<void> {
         type: SettingItemType.String,
         label: 'Verbosity',
         description: 'Controls response detail level for GPT-5 and o-series models (low, medium, high)',
-        public: true,
+        public: false,
         section: 'chatgptToolkit',
       },
       'pluginVersion': {
@@ -160,7 +188,7 @@ export async function registerPluginSettings(): Promise<void> {
         type: SettingItemType.String,
         label: 'Plugin Version & Status',
         description: 'Shows the current plugin version and when it was last loaded. This helps verify you are running the latest code.',
-        public: true,
+        public: false,
         section: 'chatgptToolkit',
         isEnum: false,
       },

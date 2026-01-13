@@ -17,6 +17,10 @@
     const cancelBtn = document.getElementById('cancelPromptEdit');
     const doneBtn = document.getElementById('savePromptEdit');
 
+    // API key show/hide toggle
+    const apiKeyInput = document.getElementById('openaiApiKey');
+    const showApiKeyToggle = document.getElementById('showApiKeyToggle');
+
     function openModal() {
       if (modal) modal.style.display = 'flex';
     }
@@ -29,6 +33,19 @@
     bindOnce(closeBtn, 'click', closeModal, '__bound_close');
     bindOnce(cancelBtn, 'click', closeModal, '__bound_cancel');
     bindOnce(doneBtn, 'click', closeModal, '__bound_done');
+
+    if (apiKeyInput && showApiKeyToggle) {
+      bindOnce(
+        showApiKeyToggle,
+        'change',
+        () => {
+          const checked = !!showApiKeyToggle.checked;
+          // Toggle input type for visibility
+          apiKeyInput.type = checked ? 'text' : 'password';
+        },
+        '__bound_show_api_key'
+      );
+    }
 
     if (modal) {
       bindOnce(

@@ -31,6 +31,51 @@ joplin.plugins.register({
       // 2. Initialize API & Models (but don't fetch modelOptions yet)
       const chatGPTAPI = new ChatGPTAPI();
       await chatGPTAPI.loadSettings();
+
+      // 2a. First-run check: warn if OpenAI API key is missing (supported Joplin UI)
+      try {
+        const apiKeyRaw = (await joplin.settings.value('openaiApiKey')) || '';
+        const apiKey = String(apiKeyRaw).trim();
+
+        const looksLikeRealOpenAIApiKey = (key: string): boolean => {
+          if (!key) return false;
+          const k = key.trim();
+
+          // Common placeholders / invalid values
+          const lower = k.toLowerCase();
+          if (
+            k === 'sk-...' ||
+            k.includes('...') ||
+            lower.includes('your') ||
+            lower.includes('api key') ||
+            lower.includes('apikey') ||
+            lower.includes('replace') ||
+            lower.includes('insert') ||
+            lower.includes('todo')
+          ) {
+            return false;
+          }
+
+          // Basic OpenAI key formats (best-effort; avoids accepting obvious defaults)
+          // Examples: sk-..., sk-proj-...
+          // Allow underscores/dashes; require a reasonable length after prefix.
+          const re = /^sk-(proj-)?[A-Za-z0-9_-]{20,}$/;
+          return re.test(k);
+        };
+
+        if (!looksLikeRealOpenAIApiKey(apiKey)) {
+          // Show on every app start until a real-looking key is set.
+          await joplin.views.dialogs.showMessageBox(
+            'AI Writing Toolkit needs an OpenAI API key to work.\n\n' +
+            'Configure it here:\n' +
+            'Tools > Cogitations Plugins > Options\n\n' +
+            'Get an API key from:\n' +
+            'https://platform.openai.com/api-keys'
+          );
+        }
+      } catch (warnError: any) {
+        console.warn('AI Writing Toolkit: could not run API key startup check:', warnError?.message || warnError);
+      }
       
       // Panel references - will be lazy-loaded
       let chatPanel: any = null;
@@ -326,7 +371,8 @@ joplin.plugins.register({
             // Set dialog buttons
             await joplin.views.dialogs.setButtons(optionsDialog, [
               { id: 'cancel', title: 'Cancel' },
-              { id: 'save', title: 'Save' }
+              // Use a submit-like button id so Joplin returns formData
+              { id: 'submit', title: 'Save' }
             ]);
             
             // Set dialog to not fit content so we can control the width via CSS
@@ -336,8 +382,9 @@ joplin.plugins.register({
             const result = await joplin.views.dialogs.open(optionsDialog);
             
             // Handle result - formData contains all form values when Save is clicked
-            if (result.id === 'save' && result.formData) {
-              const formData = result.formData;
+            if (result.id === 'submit' && result.formData) {
+              // Joplin may nest form data by form name
+              const formData = (result.formData as any).optionsForm ?? result.formData;
               
               // Save all settings using the same storage mechanism
               await joplin.settings.setValue('openaiApiKey', formData.openaiApiKey || '');
