@@ -452,10 +452,9 @@ joplin.plugins.register({
       // 7. Menu Items
       await joplin.views.menus.create('ai-writing-toolkit-menu', 'Cogitations Plugins', [
         { commandName: 'openChatGPTPanel', label: 'Open Chat Panel' },
-        { commandName: 'openPublishingPanel', label: 'PDF Publishing Settings' },
-        { commandName: 'openSystemPromptFile', label: 'Edit System Prompt' },
+        { commandName: 'openPublishingPanel', label: 'PDF Publishing Panel' },
         { commandName: 'insertNoteBlock', label: 'Insert Note Block', accelerator: 'CmdOrCtrl+Shift+3' },
-        { commandName: 'openOptionsDialog', label: 'Options' },
+        { commandName: 'openOptionsDialog', label: 'Cogitations Options' },
       ], MenuItemLocation.Tools);
 
     } catch (error: any) {
