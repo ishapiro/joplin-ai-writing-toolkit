@@ -177,16 +177,28 @@ export function getOptionsDialogHtml(
     </form>
 
     <style>
+      html, body {
+        height: 100%;
+      }
+
       body {
         min-width: 700px;
         width: 100%;
+        margin: 0;
+        overflow: hidden; /* keep scrolling inside .options-scroll-area */
+      }
+
+      #optionsForm {
+        height: 100%;
       }
       
       .options-container {
         display: flex;
         flex-direction: column;
+        /* In Joplin dialogs, 100% height isn't always reliable; use viewport height */
         min-height: 500px;
-        max-height: 80vh;
+        height: 100vh;
+        max-height: 100vh;
         width: 100%;
         min-width: 700px;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -211,6 +223,7 @@ export function getOptionsDialogHtml(
 
       .options-scroll-area {
         flex: 1;
+        min-height: 0;
         overflow-y: auto;
         padding: 20px;
         display: flex;

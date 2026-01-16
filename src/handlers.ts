@@ -150,6 +150,27 @@ export class PanelHandler {
   async handleMessage(message: WebviewMessage): Promise<any> {
     try {
       if (message.type === 'sendChatMessage') {
+        // Warn if user includes URLs but web retrieval is disabled
+        try {
+          const text = String(message.message || '');
+          const hasUrl = /https?:\/\/[^\s<>()\]\}]+/i.test(text);
+          if (hasUrl) {
+            const webAccessEnabled = (await joplin.settings.value('webAccessEnabled')) === true;
+            if (!webAccessEnabled) {
+              await joplin.views.panels.postMessage(this.panel, {
+                type: 'addMessage',
+                sender: 'system',
+                content:
+                  'Heads up: your prompt includes a URL, but **Web Access** is currently disabled. ' +
+                  'Enable it in `Tools > Cogitations Plugins > Options > Web Access (Optional)` if you want the AI to open links.',
+              });
+            }
+          }
+        } catch (warnError: any) {
+          // Non-fatal: don't block sending if warning logic fails
+          console.warn('URL/web access warning failed:', warnError?.message || warnError);
+        }
+
         const response = await this.chatGPTAPI.sendMessage(message.message || '');
         this.lastChatGPTResponse = response; // Store for later use
         return { success: true, content: response };
