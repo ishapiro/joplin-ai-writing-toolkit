@@ -12,6 +12,7 @@ export interface PublishingSettings {
   footer?: string;
   showPageNumbers?: boolean;
   includeTitlePage?: boolean;
+  centerTitlePageContent?: boolean;
 }
 
 export function parseFrontMatter(body: string): PublishingSettings {
@@ -32,7 +33,11 @@ export function parseFrontMatter(body: string): PublishingSettings {
       header: result.header,
       footer: result.footer,
       showPageNumbers: result.showPageNumbers !== undefined ? result.showPageNumbers : result.show_page_numbers,
-      includeTitlePage: result.includeTitlePage !== undefined ? result.includeTitlePage : (result.include_title_page !== undefined ? result.include_title_page : true)
+      includeTitlePage: result.includeTitlePage !== undefined ? result.includeTitlePage : (result.include_title_page !== undefined ? result.include_title_page : true),
+      centerTitlePageContent:
+        result.centerTitlePageContent !== undefined
+          ? result.centerTitlePageContent
+          : (result.center_title_page_content !== undefined ? result.center_title_page_content : false),
     };
   } catch (e) {
     console.error('Failed to parse front matter', e);
@@ -53,7 +58,8 @@ export function webviewToPluginSettings(webviewSettings: any): PublishingSetting
     header: webviewSettings.header,
     footer: webviewSettings.footer,
     showPageNumbers: webviewSettings.show_page_numbers,
-    includeTitlePage: webviewSettings.include_title_page !== undefined ? webviewSettings.include_title_page : true
+    includeTitlePage: webviewSettings.include_title_page !== undefined ? webviewSettings.include_title_page : true,
+    centerTitlePageContent: webviewSettings.center_title_page_content === true,
   };
 }
 
@@ -70,7 +76,8 @@ export function pluginToWebviewSettings(pluginSettings: PublishingSettings): any
     header: pluginSettings.header,
     footer: pluginSettings.footer,
     show_page_numbers: pluginSettings.showPageNumbers,
-    include_title_page: pluginSettings.includeTitlePage !== undefined ? pluginSettings.includeTitlePage : true
+    include_title_page: pluginSettings.includeTitlePage !== undefined ? pluginSettings.includeTitlePage : true,
+    center_title_page_content: pluginSettings.centerTitlePageContent === true,
   };
 }
 

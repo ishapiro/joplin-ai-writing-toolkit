@@ -29,7 +29,8 @@
         title: 'docTitle', subtitle: 'docSubtitle', author: 'docAuthor', 
         date: 'docDate', logo: 'docLogo', page_size: 'pageSize', 
         margin: 'pageMargin', header: 'headerText', footer: 'footerText', 
-        show_page_numbers: 'showPageNumbers', include_title_page: 'includeTitlePage'
+        show_page_numbers: 'showPageNumbers', include_title_page: 'includeTitlePage',
+        center_title_page_content: 'centerTitlePageContent'
       };
       
       console.log('DEBUG: Settings mode detected - inputIds:', inputIds);
@@ -59,7 +60,8 @@
           header: getVal(inputIds.header),
           footer: getVal(inputIds.footer),
           show_page_numbers: getCheck(inputIds.show_page_numbers),
-          include_title_page: getCheck(inputIds.include_title_page)
+          include_title_page: getCheck(inputIds.include_title_page),
+          center_title_page_content: getCheck(inputIds.center_title_page_content)
         };
         console.log('DEBUG: getSettings() called - include_title_page:', settings.include_title_page);
         return settings;
@@ -492,6 +494,7 @@
         setVal('footerText', s.footer);
         setCheck('showPageNumbers', s.show_page_numbers !== false);
         setCheck('includeTitlePage', s.include_title_page !== false);
+        setCheck('centerTitlePageContent', s.center_title_page_content === true);
         console.log('DEBUG: updatePanelFields - include_title_page value:', s.include_title_page, 'checkbox checked:', (document.getElementById('includeTitlePage') as HTMLInputElement)?.checked);
       } else if (actualMessage.type === 'showCloseMessage') {
         showCloseMessage();

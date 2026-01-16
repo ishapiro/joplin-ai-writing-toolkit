@@ -55,6 +55,7 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
   const footer = settings.footer || '';
   const showPageNumbers = settings.showPageNumbers !== false;
   const includeTitlePage = settings.includeTitlePage !== false;
+  const centerTitlePageContent = settings.centerTitlePageContent === true;
 
   const pageSizeCSS = pageSize === 'A4' ? 'A4' : 'letter';
   const pageWidth = pageSize === 'A4' ? '210mm' : '8.5in';
@@ -143,6 +144,19 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
     }
     .footer-content { flex: 1; text-align: left; display: none; } /* Hidden if empty */
     .page-number-box { text-align: center; }
+
+    /* Title page alignment */
+    .title-page.title-page-centered {
+      text-align: center;
+    }
+    .title-page.title-page-centered img {
+      display: block;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+    .title-page.title-page-centered .meta {
+      text-align: center;
+    }
   </style>
 
   <div class="preview-page">
@@ -151,8 +165,8 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
       ${includeTitlePage ? `
       <!-- Title Page (Only if includeTitlePage is true) -->
       <div class="virtual-page" id="titlePageContainer">
-        <div class="title-page">
-          ${logo ? `<img src="${logo}" style="max-width: 200px; margin-bottom: 20px;" />` : ''}
+        <div class="title-page${centerTitlePageContent ? ' title-page-centered' : ''}">
+          ${logo ? `<img src="${logo}" style="max-width: 200px; margin-bottom: 20px;${centerTitlePageContent ? ' margin-left: auto; margin-right: auto; display: block;' : ''}" />` : ''}
           <h1 style="font-size: 32px; margin-bottom: 10px;">${title}</h1>
           ${subtitle ? `<h2 style="font-size: 20px; color: #666; margin-bottom: 20px;">${subtitle}</h2>` : ''}
           <div class="meta" style="margin-top: 30px; font-size: 14px; color: #444;">

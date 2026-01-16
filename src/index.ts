@@ -133,6 +133,106 @@ joplin.plugins.register({
           
           // Set up message handler
           await joplin.views.panels.onMessage(publishingPanel, async (message: any) => {
+            const toFileUrl = (absolutePath: string): string => {
+              // Joplin webviews generally can load local files via file://
+              // Ensure forward slashes and proper URL encoding.
+              const normalized = absolutePath.replace(/\\/g, '/');
+              // Add leading slash for Windows drive paths (C:/...)
+              const withScheme = normalized.match(/^[A-Za-z]:\//) ? `file:///${normalized}` : `file://${normalized}`;
+              return encodeURI(withScheme);
+            };
+
+            const resolveJoplinResourceUrlsInHtml = async (html: string): Promise<string> => {
+              if (!html) return html;
+
+              // Joplin resource URLs in rendered HTML look like src=":/<resourceId>" or href=":/<resourceId>"
+              // They won't resolve in a generic webview during print-to-PDF, so rewrite to file:// URLs.
+              const re = /\b(?:src|href)=["']:(?:\/)?([0-9a-fA-F]{32})["']/g;
+              const ids = new Set<string>();
+              let m: RegExpExecArray | null;
+              while ((m = re.exec(html)) !== null) {
+                if (m[1]) ids.add(m[1]);
+              }
+              if (!ids.size) return html;
+
+              const idToFileUrl = new Map<string, string>();
+              for (const id of ids) {
+                try {
+                  const resourcePath = await joplin.data.resourcePath(id);
+                  if (resourcePath) idToFileUrl.set(id, toFileUrl(resourcePath));
+                } catch (e) {
+                  // Leave unresolved resource URLs as-is
+                }
+              }
+              if (!idToFileUrl.size) return html;
+
+              return html.replace(re, (match: string, id: string) => {
+                const fileUrl = idToFileUrl.get(id);
+                if (!fileUrl) return match;
+                // Replace only the attribute value portion, preserving whether it was src or href and quote style.
+                return match.replace(/:(?:\/)?[0-9a-fA-F]{32}/, fileUrl);
+              });
+            };
+
+            const extractFirstResourceIdFromNoteBody = (body: string): string | null => {
+              if (!body) return null;
+              // Markdown resource image: ![alt](:resourceId)
+              const mdMatch = body.match(/!\[[^\]]*\]\(:\/?([0-9a-fA-F]{32})\)/);
+              if (mdMatch?.[1]) return mdMatch[1];
+              // HTML image: <img src=":/resourceId">
+              const htmlMatch = body.match(/<img[^>]+src=["']:\/*([0-9a-fA-F]{32})["']/i);
+              if (htmlMatch?.[1]) return htmlMatch[1];
+              return null;
+            };
+
+            const resolveLogoInputToSrc = async (logoInput: string | undefined): Promise<string> => {
+              const raw = (logoInput || '').trim();
+              if (!raw) return '';
+
+              // If it looks like a URL, leave as-is.
+              if (/^https?:\/\//i.test(raw)) return raw;
+
+              // Allow ":<id>" and ":/<id>" forms
+              const maybeId = raw.startsWith(':/') ? raw.slice(2).trim()
+                : raw.startsWith(':') ? raw.slice(1).trim()
+                : raw;
+
+              // IDs in Joplin are 32 hex chars (notes and resources)
+              if (!/^[0-9a-fA-F]{32}$/.test(maybeId)) {
+                // Could be a filesystem path or other URL type; return as-is
+                return raw;
+              }
+
+              // First try treating it as a note ID: use the first embedded image resource in that note.
+              try {
+                const note = await joplin.data.get(['notes', maybeId], { fields: ['id', 'body'] });
+                if (note?.body) {
+                  const rid = extractFirstResourceIdFromNoteBody(note.body);
+                  if (rid) {
+                    const resourcePath = await joplin.data.resourcePath(rid);
+                    return toFileUrl(resourcePath);
+                  }
+                }
+              } catch (e) {
+                // Not a note ID (or no access) - fall through to resource ID resolution.
+              }
+
+              // Treat as a resource ID
+              try {
+                const resourcePath = await joplin.data.resourcePath(maybeId);
+                return toFileUrl(resourcePath);
+              } catch (e) {
+                // Unknown ID - return original
+                return raw;
+              }
+            };
+
+            const resolvePublishingSettingsForPreview = async (pluginSettings: any): Promise<any> => {
+              const resolved = { ...(pluginSettings || {}) };
+              resolved.logo = await resolveLogoInputToSrc(resolved.logo);
+              return resolved;
+            };
+
             if (message.type === 'closePanel') {
               // Send a nicely formatted close message to the panel before closing
               console.info('DEBUG: Received closePanel message, showing close message.');
@@ -174,8 +274,9 @@ joplin.plugins.register({
                 console.info('DEBUG: Received refreshPreview message.');
                 const note = await getCurrentNote();
                 const settings = parseFrontMatter(note.body);
-                const pluginSettings = webviewToPluginSettings(settings);
-                const previewHtml = generatePreviewHtml(note.body, note.title, pluginSettings);
+                const pluginSettings = await resolvePublishingSettingsForPreview(webviewToPluginSettings(settings));
+                const previewHtmlRaw = generatePreviewHtml(note.body, note.title, pluginSettings);
+                const previewHtml = await resolveJoplinResourceUrlsInHtml(previewHtmlRaw);
                 await joplin.views.panels.setHtml(publishingPanel, getPreviewPanelHtml(previewHtml));
               } catch (error) {
                 console.error('DEBUG: Error refreshing preview:', error);
@@ -195,8 +296,9 @@ joplin.plugins.register({
               try {
                 console.info('DEBUG: Received generatePreview message with settings:', message.settings);
                 const note = await getCurrentNote();
-                const pluginSettings = webviewToPluginSettings(message.settings);
-                const previewHtml = generatePreviewHtml(note.body, note.title, pluginSettings);
+                const pluginSettings = await resolvePublishingSettingsForPreview(webviewToPluginSettings(message.settings));
+                const previewHtmlRaw = generatePreviewHtml(note.body, note.title, pluginSettings);
+                const previewHtml = await resolveJoplinResourceUrlsInHtml(previewHtmlRaw);
                 isPreviewMode = true;
                 
                 const chatPanelInstance = await ensureChatPanel();
@@ -279,7 +381,7 @@ joplin.plugins.register({
 
       await joplin.commands.register({
         name: 'openPublishingPanel',
-        label: 'PDF Publishing Settings',
+        label: 'PDF Publishing',
         iconName: 'fas fa-print',
         execute: async () => {
            console.info('DEBUG: openPublishingPanel command executing.');
@@ -452,7 +554,7 @@ joplin.plugins.register({
       // 7. Menu Items
       await joplin.views.menus.create('ai-writing-toolkit-menu', 'Cogitations Plugins', [
         { commandName: 'openChatGPTPanel', label: 'Open Chat Panel' },
-        { commandName: 'openPublishingPanel', label: 'PDF Publishing Panel' },
+        { commandName: 'openPublishingPanel', label: 'PDF Publishing' },
         { commandName: 'insertNoteBlock', label: 'Insert Note Block', accelerator: 'CmdOrCtrl+Shift+3' },
         { commandName: 'openOptionsDialog', label: 'Cogitations Options' },
       ], MenuItemLocation.Tools);

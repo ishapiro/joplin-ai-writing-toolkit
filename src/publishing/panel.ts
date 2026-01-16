@@ -31,11 +31,15 @@ export function getPublishingPanelHtml(): string {
           </div>
           <div class="form-group">
             <label class="input-label">Logo URL/Path</label>
-            <input type="text" id="docLogo" class="text-input" placeholder="Image resource ID or URL">
+            <input type="text" id="docLogo" class="text-input" placeholder="URL, Resource ID, or Note ID (uses first image)">
           </div>
           <div class="checkbox-group">
             <input type="checkbox" id="includeTitlePage" checked>
             <label for="includeTitlePage" class="input-label" style="margin-bottom: 0;">Include Title Page</label>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="centerTitlePageContent">
+            <label for="centerTitlePageContent" class="input-label" style="margin-bottom: 0;">Center Title Page Content</label>
           </div>
         </div>
 

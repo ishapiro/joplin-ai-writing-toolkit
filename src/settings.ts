@@ -70,7 +70,7 @@ export async function registerPluginSettings(): Promise<void> {
   await joplin.settings.registerSection('chatgptToolkit', {
     label: 'AI Writing Toolkit',
     iconName: 'fas fa-robot',
-    description: `Configure via Tools > Cogitations Plugins > Options. (OpenAI API key required)  |  Version: ${pluginVersion}  |  Loaded: ${loadTimestamp}`
+    description: 'Configure via Tools > Cogitations Plugins > Options. (OpenAI API key required)'
   });
 
   try {
@@ -186,11 +186,12 @@ export async function registerPluginSettings(): Promise<void> {
       'pluginVersion': {
         value: `${pluginVersion} | Loaded: ${loadTimestamp}`,
         type: SettingItemType.String,
-        label: 'Plugin Version & Status',
+        label: 'Version & Loaded',
         description: 'Shows the current plugin version and when it was last loaded. This helps verify you are running the latest code.',
-        public: false,
+        public: true,
         section: 'chatgptToolkit',
         isEnum: false,
+        readOnly: true,
       },
     });
     
