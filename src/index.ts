@@ -438,10 +438,14 @@ joplin.plugins.register({
             const currentSettings = {
               openaiApiKey: await joplin.settings.value('openaiApiKey') || '',
               openaiModel: await joplin.settings.value('openaiModel') || '',
-              maxTokens: await joplin.settings.value('maxTokens') || 1000,
+              maxTokens: await joplin.settings.value('maxTokens') || 50000,
               autoSave: await joplin.settings.value('autoSave') !== false,
               reasoningEffort: await joplin.settings.value('reasoningEffort') || 'low',
               verbosity: await joplin.settings.value('verbosity') || 'low',
+              webAccessEnabled: await joplin.settings.value('webAccessEnabled') === true,
+              webAccessAllowedDomains: await joplin.settings.value('webAccessAllowedDomains') || '',
+              webAccessMaxUrls: await joplin.settings.value('webAccessMaxUrls') || 3,
+              webAccessMaxCharsPerUrl: await joplin.settings.value('webAccessMaxCharsPerUrl') || 15000,
               systemPromptFile: await joplin.settings.value('systemPromptFile') || '',
               systemPromptContent: systemPromptContent || '',
               pluginVersion: await joplin.settings.value('pluginVersion') || '',
@@ -455,7 +459,7 @@ joplin.plugins.register({
                 const models = JSON.parse(storedModelsStr);
                 modelOptionsForDialog[''] = '(Auto-select latest general model)';
                 models.forEach((model: any) => {
-                  const displayName = model.id === 'gpt-5.1' ? 'GPT-5.1 (Latest)' : 
+                  const displayName = model.id === 'gpt-5.2' ? 'GPT-5.2 (Latest)' : 
                                      model.id.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
                   modelOptionsForDialog[model.id] = displayName;
                 });
@@ -491,11 +495,15 @@ joplin.plugins.register({
               // Save all settings using the same storage mechanism
               await joplin.settings.setValue('openaiApiKey', formData.openaiApiKey || '');
               await joplin.settings.setValue('openaiModel', formData.openaiModel || '');
-              await joplin.settings.setValue('maxTokens', parseInt(formData.maxTokens) || 1000);
+              await joplin.settings.setValue('maxTokens', parseInt(formData.maxTokens) || 50000);
               // Checkbox: 'on' when checked, undefined when unchecked
               await joplin.settings.setValue('autoSave', formData.autoSave === 'on' || formData.autoSave === true || formData.autoSave === 'true');
               await joplin.settings.setValue('reasoningEffort', formData.reasoningEffort || 'low');
               await joplin.settings.setValue('verbosity', formData.verbosity || 'low');
+              await joplin.settings.setValue('webAccessEnabled', formData.webAccessEnabled === 'on' || formData.webAccessEnabled === true || formData.webAccessEnabled === 'true');
+              await joplin.settings.setValue('webAccessAllowedDomains', String(formData.webAccessAllowedDomains || ''));
+              await joplin.settings.setValue('webAccessMaxUrls', parseInt(formData.webAccessMaxUrls) || 3);
+              await joplin.settings.setValue('webAccessMaxCharsPerUrl', parseInt(formData.webAccessMaxCharsPerUrl) || 15000);
 
               // Save system prompt (if present)
               if (typeof formData.systemPromptContent !== 'undefined') {

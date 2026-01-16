@@ -1,7 +1,17 @@
-import { ChatGPTAPISettings, ChatGPTResponse, ModelInfo } from './types';
+import { ChatGPTAPISettings, ModelInfo } from './types';
 import { sanitizeDataKey } from './utils';
 
 declare const joplin: any;
+
+function isResponsesCapableModel(modelId: string): boolean {
+  // Conservative allowlist: only show models we will call via /v1/responses.
+  return (
+    modelId.startsWith('gpt-5') ||
+    modelId.startsWith('gpt-4.1') ||
+    modelId.startsWith('gpt-4o') ||
+    modelId.startsWith('o')
+  );
+}
 
 // Function to fetch available models from OpenAI API
 export async function fetchAvailableModels(apiKey: string): Promise<ModelInfo[]> {
@@ -21,15 +31,11 @@ export async function fetchAvailableModels(apiKey: string): Promise<ModelInfo[]>
 
     const data = await response.json();
     if (data.data && Array.isArray(data.data)) {
-      // Filter and extract model info for chat/completion models
+      // Filter and extract model info for supported models
       const models: ModelInfo[] = data.data
         .filter((model: any) => {
           const id = model.id || '';
-          
-          // Filter for relevant models (chat models)
-          // Include all 'gpt' models and 'o' series (o1, o3, etc)
-          // This is more permissive to ensure we support what the user has access to
-          return id.includes('gpt') || /^o\d/.test(id);
+          return isResponsesCapableModel(id);
         })
         .map((model: any) => ({
           id: model.id,
@@ -117,8 +123,7 @@ export async function ensureModelsFetchedAndGetOptions(settingsApiKey: string): 
           // Filter to only include gpt-4o and newer models
           availableModels = availableModels.filter((model: ModelInfo) => {
             const id = model.id;
-            return id.startsWith('gpt-4o') || id.startsWith('gpt-4.1') || id.startsWith('gpt-5') ||
-                   id.startsWith('o1') || id.startsWith('o3') || id.startsWith('o4');
+            return isResponsesCapableModel(id);
           });
           
           // Ensure they're still sorted (newest first)
@@ -142,20 +147,21 @@ export async function ensureModelsFetchedAndGetOptions(settingsApiKey: string): 
   const now = Math.floor(Date.now() / 1000);
   
   const defaultModels: ModelInfo[] = [
-    { id: 'gpt-5.1', created: now },
-    { id: 'gpt-5', created: now - 86400 }, // 1 day ago
-    { id: 'gpt-5-mini', created: now - 172800 }, // 2 days ago
-    { id: 'gpt-5-nano', created: now - 259200 }, // 3 days ago
-    { id: 'gpt-4.1', created: now - 345600 }, // 4 days ago
-    { id: 'gpt-4.1-mini', created: now - 432000 }, // 5 days ago
-    { id: 'gpt-4.1-nano', created: now - 518400 }, // 6 days ago
-    { id: 'gpt-4o', created: now - 604800 }, // 7 days ago
-    { id: 'gpt-4o-mini', created: now - 691200 }, // 8 days ago
-    { id: 'o1', created: now - 1036800 }, // 12 days ago
-    { id: 'o1-preview', created: now - 1123200 }, // 13 days ago
-    { id: 'o3', created: now - 1209600 }, // 14 days ago
-    { id: 'o3-mini', created: now - 1296000 }, // 15 days ago
-    { id: 'o4-mini', created: now - 1382400 } // 16 days ago
+    { id: 'gpt-5.2', created: now },
+    { id: 'gpt-5.1', created: now - 86400 }, // 1 day ago
+    { id: 'gpt-5', created: now - 172800 }, // 2 days ago
+    { id: 'gpt-5-mini', created: now - 259200 }, // 3 days ago
+    { id: 'gpt-5-nano', created: now - 345600 }, // 4 days ago
+    { id: 'gpt-4.1', created: now - 432000 }, // 5 days ago
+    { id: 'gpt-4.1-mini', created: now - 518400 }, // 6 days ago
+    { id: 'gpt-4.1-nano', created: now - 604800 }, // 7 days ago
+    { id: 'gpt-4o', created: now - 691200 }, // 8 days ago
+    { id: 'gpt-4o-mini', created: now - 777600 }, // 9 days ago
+    { id: 'o1', created: now - 1123200 }, // 13 days ago
+    { id: 'o1-preview', created: now - 1209600 }, // 14 days ago
+    { id: 'o3', created: now - 1296000 }, // 15 days ago
+    { id: 'o3-mini', created: now - 1382400 }, // 16 days ago
+    { id: 'o4-mini', created: now - 1468800 } // 17 days ago
   ];
   
   // Use fetched models if available, otherwise use default
@@ -209,12 +215,13 @@ export async function ensureModelsFetchedAndGetOptions(settingsApiKey: string): 
 export class ChatGPTAPI {
   private settings: ChatGPTAPISettings;
   private conversationHistory: Array<{role: 'user' | 'assistant', content: string}> = [];
+  private isSummarizingHistory: boolean = false;
 
   constructor() {
     this.settings = {
       openaiApiKey: '',
-      openaiModel: 'gpt-5.1',
-      maxTokens: 1000,
+      openaiModel: 'gpt-5.2',
+      maxTokens: 50000,
       systemPrompt: `*System Prompt (for Joplin + ChatGPT)*
 
 You are an AI Executive Assistant working inside the Joplin note-taking system. You support a busy executive by improving their notes, helping with writing, research, and organization. Always respond in *clear, concise, professional* language and use *Markdown* formatting suitable for Joplin.
@@ -281,7 +288,11 @@ Default behaviors when the user's request is ambiguous:
 Always optimize your responses so they are immediately useful to a busy executive reading within Joplin.`,
       autoSave: true,
       reasoningEffort: 'low',
-      verbosity: 'low'
+      verbosity: 'low',
+      webAccessEnabled: false,
+      webAccessAllowedDomains: '',
+      webAccessMaxUrls: 3,
+      webAccessMaxCharsPerUrl: 15000,
     };
   }
 
@@ -457,6 +468,10 @@ Always optimize your responses so they are immediately useful to a busy executiv
     this.settings.autoSave = await joplin.settings.value('autoSave');
     this.settings.reasoningEffort = await joplin.settings.value('reasoningEffort');
     this.settings.verbosity = await joplin.settings.value('verbosity');
+    this.settings.webAccessEnabled = await joplin.settings.value('webAccessEnabled') === true;
+    this.settings.webAccessAllowedDomains = await joplin.settings.value('webAccessAllowedDomains') || '';
+    this.settings.webAccessMaxUrls = await joplin.settings.value('webAccessMaxUrls') || 3;
+    this.settings.webAccessMaxCharsPerUrl = await joplin.settings.value('webAccessMaxCharsPerUrl') || 15000;
   }
 
   // Load system prompt from file (similar to Joplin's styles)
@@ -617,20 +632,21 @@ Always optimize your responses so they are immediately useful to a busy executiv
     if (availableModels.length === 0) {
       const now = Math.floor(Date.now() / 1000);
       availableModels = [
-        { id: 'gpt-5.1', created: now },
-        { id: 'gpt-5', created: now - 86400 },
-        { id: 'gpt-5-mini', created: now - 172800 },
-        { id: 'gpt-5-nano', created: now - 259200 },
-        { id: 'gpt-4.1', created: now - 345600 },
-        { id: 'gpt-4.1-mini', created: now - 432000 },
-        { id: 'gpt-4.1-nano', created: now - 518400 },
-        { id: 'gpt-4o', created: now - 604800 },
-        { id: 'gpt-4o-mini', created: now - 691200 },
-        { id: 'o1', created: now - 1036800 },
-        { id: 'o1-preview', created: now - 1123200 },
-        { id: 'o3', created: now - 1209600 },
-        { id: 'o3-mini', created: now - 1296000 },
-        { id: 'o4-mini', created: now - 1382400 }
+        { id: 'gpt-5.2', created: now },
+        { id: 'gpt-5.1', created: now - 86400 },
+        { id: 'gpt-5', created: now - 172800 },
+        { id: 'gpt-5-mini', created: now - 259200 },
+        { id: 'gpt-5-nano', created: now - 345600 },
+        { id: 'gpt-4.1', created: now - 432000 },
+        { id: 'gpt-4.1-mini', created: now - 518400 },
+        { id: 'gpt-4.1-nano', created: now - 604800 },
+        { id: 'gpt-4o', created: now - 691200 },
+        { id: 'gpt-4o-mini', created: now - 777600 },
+        { id: 'o1', created: now - 1123200 },
+        { id: 'o1-preview', created: now - 1209600 },
+        { id: 'o3', created: now - 1296000 },
+        { id: 'o3-mini', created: now - 1382400 },
+        { id: 'o4-mini', created: now - 1468800 }
       ];
     }
     
@@ -769,6 +785,153 @@ Always optimize your responses so they are immediately useful to a busy executiv
     console.info(`[ChatGPT API] History trimmed to ${trimmedHistory.length} messages (estimated ${totalTokens} tokens, max ${maxTokens})`);
   }
 
+  private formatHistoryForSummarization(): string {
+    // Build a compact transcript for summarization.
+    const parts: string[] = [];
+    for (const msg of this.conversationHistory) {
+      const role = msg.role === 'user' ? 'User' : 'Assistant';
+      parts.push(`${role}: ${msg.content}`);
+    }
+    // Cap size to avoid runaway payloads
+    const joined = parts.join('\n\n');
+    const maxChars = 200_000;
+    return joined.length > maxChars ? joined.slice(joined.length - maxChars) : joined;
+  }
+
+  private async summarizeAndReplaceHistoryIfNeeded(maxHistoryTokens: number): Promise<void> {
+    if (this.isSummarizingHistory) return;
+    if (!this.conversationHistory.length) return;
+
+    // If we're already under the limit, keep as-is.
+    let historyTokens = 0;
+    for (const m of this.conversationHistory) historyTokens += this.estimateTokens(m.content);
+    if (historyTokens <= maxHistoryTokens) return;
+
+    this.isSummarizingHistory = true;
+    try {
+      const transcript = this.formatHistoryForSummarization();
+      const summarizationMessages = [
+        {
+          role: 'system',
+          content:
+            'You summarize chat history for reuse as context.\n' +
+            'Return a concise but information-dense summary with:\n' +
+            '- Key facts and context\n' +
+            '- Decisions made\n' +
+            '- Constraints and user preferences\n' +
+            '- Open questions / next steps\n' +
+            'No preamble; just the summary in Markdown.',
+        },
+        {
+          role: 'user',
+          content: `Summarize the following conversation history:\n\n${transcript}`,
+        },
+      ];
+
+      // Use the same OpenAI backend but do NOT include existing conversation history or tools.
+      const summary = await this.callOpenAIForText({
+        messages: summarizationMessages,
+        maxOutputTokens: Math.min(4000, Math.max(1000, Math.floor(this.settings.maxTokens / 10))),
+        enableWebSearchTool: false,
+      });
+
+      // Replace full history with a single summary (plus a marker).
+      this.conversationHistory = [
+        {
+          role: 'assistant',
+          content: `## Conversation summary (auto-generated)\n\n${summary}`.trim(),
+        },
+      ];
+      console.info('[ChatGPT API] Conversation history summarized and replaced.');
+    } catch (e: any) {
+      console.warn('[ChatGPT API] Failed to summarize history; falling back to trimming:', e?.message || e);
+      this.trimHistoryToTokenLimit(maxHistoryTokens);
+    } finally {
+      this.isSummarizingHistory = false;
+    }
+  }
+
+  private async callOpenAIForText(args: {
+    messages: Array<{ role: string; content: string }>;
+    maxOutputTokens: number;
+    enableWebSearchTool: boolean;
+  }): Promise<string> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    try {
+      const requestBody: any = {
+        model: this.settings.openaiModel,
+        input: args.messages,
+        max_output_tokens: args.maxOutputTokens,
+        stream: false,
+      };
+
+      if (args.enableWebSearchTool && this.settings.webAccessEnabled && (this.settings.webAccessMaxUrls ?? 0) > 0) {
+        requestBody.tools = [{ type: 'web_search' }];
+      }
+
+      if (this.settings.openaiModel.includes('gpt-5') || this.settings.openaiModel.startsWith('o')) {
+        // Responses API uses nested objects for these controls.
+        requestBody.reasoning = { effort: this.settings.reasoningEffort };
+        requestBody.text = { verbosity: this.settings.verbosity };
+      }
+
+      const response = await fetch('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.settings.openaiApiKey}`,
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      const responseText = await response.text();
+      if (!response.ok) {
+        let errorData: any = {};
+        try {
+          errorData = JSON.parse(responseText);
+        } catch {}
+        throw new Error(
+          `OpenAI API error: ${response.status} ${response.statusText}. ${errorData.error?.message || errorData.error?.code || 'Unknown error'}`
+        );
+      }
+
+      let data: any;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        throw new Error('Invalid JSON response from OpenAI API');
+      }
+
+      const extractTextFromResponsesApi = (payload: any): string => {
+        if (!payload) return '';
+        if (typeof payload.output_text === 'string' && payload.output_text.trim()) return payload.output_text;
+        const out: string[] = [];
+        const output = Array.isArray(payload.output) ? payload.output : [];
+        for (const item of output) {
+          const contentArr = Array.isArray(item?.content) ? item.content : [];
+          for (const c of contentArr) {
+            if (typeof c?.text === 'string' && (c.type === 'output_text' || c.type === 'text')) out.push(c.text);
+          }
+        }
+        return out.join('\n').trim();
+      };
+
+      const content = extractTextFromResponsesApi(data);
+      if (!content) throw new Error('No content in OpenAI response');
+      return content;
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error(`Request timeout after 60 seconds.`);
+      }
+      throw error;
+    }
+  }
+
   async sendMessage(userMessage: string): Promise<string> {
     await this.loadSettings();
 
@@ -780,117 +943,49 @@ Always optimize your responses so they are immediately useful to a busy executiv
     console.info(`[ChatGPT API] User message length: ${userMessage.length} characters`);
     console.info(`[ChatGPT API] Max tokens: ${this.settings.maxTokens}`);
 
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      console.error(`[ChatGPT API] Request timeout after 60 seconds for model: ${this.settings.openaiModel}`);
-      controller.abort();
-    }, 60000); // 60 second timeout
-
     try {
-      // Determine the correct endpoint and parameter name based on model type
-      const endpoint = (this.settings.openaiModel.startsWith('o3') || this.settings.openaiModel === 'o4-mini') 
-        ? 'https://api.openai.com/v1/responses'
-        : 'https://api.openai.com/v1/chat/completions';
-      
-      const isResponsesEndpoint = endpoint.includes('/responses');
-      
       // Build messages array with conversation history
+      const webAccessAllowlist = String(this.settings.webAccessAllowedDomains || '').trim();
+      const webAccessInstruction =
+        this.settings.webAccessEnabled
+          ? (
+              '\n\nWeb access:\n' +
+              '- You may use the `web_search` tool to retrieve up-to-date information and open URLs the user provides.\n' +
+              (webAccessAllowlist
+                ? `- Only browse these allowed domains (or subdomains):\n${webAccessAllowlist}\n`
+                : '- If an allowlist is not provided, you may browse any public website the user asks for.\n') +
+              `- Open at most ${this.settings.webAccessMaxUrls} page(s) per user request.\n` +
+              `- Keep quoted excerpts from any single page to ~${this.settings.webAccessMaxCharsPerUrl} characters or less.\n` +
+              '- Prefer using the exact URLs the user provides when possible.\n'
+            )
+          : '';
+
       const messages = [
-        { role: 'system', content: this.settings.systemPrompt + '\n\nPlease format your responses using Markdown syntax for better readability.' }
+        {
+          role: 'system',
+          content:
+            this.settings.systemPrompt +
+            '\n\nPlease format your responses using Markdown syntax for better readability.' +
+            webAccessInstruction,
+        },
       ];
       
-      // Add conversation history, but limit to 1/2 of max tokens
+      // If history gets too large, summarize it via OpenAI and replace it with the summary.
       const maxHistoryTokensForRequest = Math.floor(this.settings.maxTokens / 2);
+      await this.summarizeAndReplaceHistoryIfNeeded(maxHistoryTokensForRequest);
+
+      // Add conversation history, but limit to 1/2 of max tokens
       const recentHistory = this.getLimitedHistory(maxHistoryTokensForRequest);
       messages.push(...recentHistory);
       
       // Add current user message
       messages.push({ role: 'user', content: userMessage });
       
-      const requestBody: any = {
-        model: this.settings.openaiModel,
-        [isResponsesEndpoint ? 'input' : 'messages']: messages,
-        ...(this.settings.openaiModel.includes('gpt-5') || this.settings.openaiModel.includes('gpt-4.1') || this.settings.openaiModel.startsWith('o')
-          ? { max_completion_tokens: this.settings.maxTokens }
-          : { max_tokens: this.settings.maxTokens }
-        ),
-        stream: false
-      };
-
-      // Add new parameters for newer models
-      if (this.settings.openaiModel.includes('gpt-5') || this.settings.openaiModel.startsWith('o')) {
-        requestBody.reasoning_effort = this.settings.reasoningEffort; // low, medium, high
-        requestBody.verbosity = this.settings.verbosity; // low, medium, high
-      }
-
-      console.info(`[ChatGPT API] Request body:`, JSON.stringify(requestBody, null, 2));
-      console.info(`[ChatGPT API] Using endpoint: ${endpoint}`);
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.settings.openaiApiKey}`
-        },
-        body: JSON.stringify(requestBody),
-        signal: controller.signal
+      const content = await this.callOpenAIForText({
+        messages,
+        maxOutputTokens: this.settings.maxTokens,
+        enableWebSearchTool: true,
       });
-
-      clearTimeout(timeoutId);
-
-      console.info(`[ChatGPT API] Response status: ${response.status} ${response.statusText}`);
-      console.info(`[ChatGPT API] Response headers:`, {
-        'content-type': response.headers.get('content-type'),
-        'content-length': response.headers.get('content-length'),
-        'x-ratelimit-limit': response.headers.get('x-ratelimit-limit'),
-        'x-ratelimit-remaining': response.headers.get('x-ratelimit-remaining')
-      });
-
-      if (!response.ok) {
-        let errorData: any = {};
-        try {
-          const errorText = await response.text();
-          console.error(`[ChatGPT API] Error response body:`, errorText);
-          errorData = JSON.parse(errorText);
-        } catch (parseError) {
-          console.error(`[ChatGPT API] Failed to parse error response:`, parseError);
-        }
-        
-        const errorMessage = `OpenAI API error: ${response.status} ${response.statusText}. ${errorData.error?.message || errorData.error?.code || 'Unknown error'}`;
-        console.error(`[ChatGPT API] Full error:`, errorMessage);
-        throw new Error(errorMessage);
-      }
-
-      // Handle non-streaming response
-      const responseText = await response.text();
-      console.info(`[ChatGPT API] Response body length: ${responseText.length} characters`);
-      
-      let data: ChatGPTResponse;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error(`[ChatGPT API] Failed to parse response JSON:`, parseError);
-        console.error(`[ChatGPT API] Raw response:`, responseText);
-        throw new Error('Invalid JSON response from OpenAI API');
-      }
-
-      console.info(`[ChatGPT API] Parsed response:`, {
-        choices: data.choices?.length || 0,
-        usage: data.usage,
-        model: data.model
-      });
-
-      if (!data.choices || data.choices.length === 0) {
-        console.error(`[ChatGPT API] No choices in response:`, data);
-        throw new Error('No response choices received from ChatGPT');
-      }
-
-      const content = data.choices[0]?.message?.content;
-      if (!content) {
-        console.error(`[ChatGPT API] No content in first choice:`, data.choices[0]);
-        throw new Error('No content in ChatGPT response');
-      }
 
       console.info(`[ChatGPT API] Success! Response length: ${content.length} characters`);
       
@@ -900,6 +995,7 @@ Always optimize your responses so they are immediately useful to a busy executiv
       
       // Trim history to stay within token limits (keep it under 1/2 of max tokens)
       const maxHistoryTokensForStorage = Math.floor(this.settings.maxTokens / 2);
+      await this.summarizeAndReplaceHistoryIfNeeded(maxHistoryTokensForStorage);
       this.trimHistoryToTokenLimit(maxHistoryTokensForStorage);
       
       console.info(`[ChatGPT API] Conversation history now has ${this.conversationHistory.length} messages`);
@@ -907,16 +1003,9 @@ Always optimize your responses so they are immediately useful to a busy executiv
       return content;
 
     } catch (error: any) {
-      clearTimeout(timeoutId);
-      
-      if (error.name === 'AbortError') {
-        console.error(`[ChatGPT API] Request was aborted (timeout) for model: ${this.settings.openaiModel}`);
-        throw new Error(`Request timeout after 60 seconds. This may indicate the model '${this.settings.openaiModel}' is not available or experiencing issues.`);
-      }
-      
       console.error(`[ChatGPT API] Request failed:`, error);
       
-      if (error.message.includes('fetch')) {
+      if (error?.message && String(error.message).includes('fetch')) {
         throw new Error(`Network error: ${error.message}. Please check your internet connection and try again.`);
       }
       

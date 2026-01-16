@@ -22,15 +22,16 @@ export async function registerPluginSettings(): Promise<void> {
   if (modelsForSettings.length === 0) {
     const now = Math.floor(Date.now() / 1000);
     modelsForSettings = [
-      { id: 'gpt-5.1', created: now },
-      { id: 'gpt-5', created: now - 86400 },
-      { id: 'gpt-5-mini', created: now - 172800 },
-      { id: 'gpt-5-nano', created: now - 259200 },
-      { id: 'gpt-4.1', created: now - 345600 },
-      { id: 'gpt-4.1-mini', created: now - 432000 },
-      { id: 'gpt-4.1-nano', created: now - 518400 },
-      { id: 'gpt-4o', created: now - 604800 },
-      { id: 'gpt-4o-mini', created: now - 691200 },
+      { id: 'gpt-5.2', created: now },
+      { id: 'gpt-5.1', created: now - 86400 },
+      { id: 'gpt-5', created: now - 172800 },
+      { id: 'gpt-5-mini', created: now - 259200 },
+      { id: 'gpt-5-nano', created: now - 345600 },
+      { id: 'gpt-4.1', created: now - 432000 },
+      { id: 'gpt-4.1-mini', created: now - 518400 },
+      { id: 'gpt-4.1-nano', created: now - 604800 },
+      { id: 'gpt-4o', created: now - 691200 },
+      { id: 'gpt-4o-mini', created: now - 777600 },
       { id: 'o1', created: now - 1036800 },
       { id: 'o1-preview', created: now - 1123200 },
       { id: 'o3', created: now - 1209600 },
@@ -46,7 +47,7 @@ export async function registerPluginSettings(): Promise<void> {
   
   // Add all models with formatted display names
   modelsForSettings.forEach(model => {
-    const displayName = model.id === 'gpt-5.1' ? 'GPT-5.1 (Latest)' : 
+    const displayName = model.id === 'gpt-5.2' ? 'GPT-5.2 (Latest)' : 
                        model.id.replace(/-/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
     settingsModelOptions[model.id] = displayName;
   });
@@ -121,16 +122,16 @@ export async function registerPluginSettings(): Promise<void> {
         value: '',
         type: SettingItemType.String,
         label: 'OpenAI Model',
-        description: 'Select a model from the dropdown, or choose "(Auto-select latest general model)" to automatically use the newest general model. Models are filtered to gpt-4o and newer.',
+        description: 'Select a model from the dropdown, or choose "(Auto-select latest general model)" to automatically use the newest general model. Models are filtered to Responses-capable models (gpt-4o/4.1/5 and o-series).',
         public: false,
         section: 'chatgptToolkit',
         options: settingsModelOptions,
       },
       'maxTokens': {
-        value: 1000,
+        value: 50000,
         type: SettingItemType.Int,
         label: 'Max Tokens',
-        description: 'Maximum number of tokens to generate in responses',
+        description: 'Maximum number of completion tokens to generate in responses',
         public: false,
         section: 'chatgptToolkit',
       },
@@ -180,6 +181,38 @@ export async function registerPluginSettings(): Promise<void> {
         type: SettingItemType.String,
         label: 'Verbosity',
         description: 'Controls response detail level for GPT-5 and o-series models (low, medium, high)',
+        public: false,
+        section: 'chatgptToolkit',
+      },
+      'webAccessEnabled': {
+        value: false,
+        type: SettingItemType.Bool,
+        label: 'Web Access Enabled',
+        description: 'If enabled, the plugin enables the OpenAI Responses API web_search tool so the model can open URLs you include in your prompt.',
+        public: false,
+        section: 'chatgptToolkit',
+      },
+      'webAccessAllowedDomains': {
+        value: '',
+        type: SettingItemType.String,
+        label: 'Web Access Allowed Domains',
+        description: 'Optional allowlist (comma/newline separated). Examples: example.com, *.wikipedia.org. If blank, the model may browse any public website the user asks for.',
+        public: false,
+        section: 'chatgptToolkit',
+      },
+      'webAccessMaxUrls': {
+        value: 3,
+        type: SettingItemType.Int,
+        label: 'Web Access Max URLs',
+        description: 'Maximum number of URLs to fetch from a single prompt.',
+        public: false,
+        section: 'chatgptToolkit',
+      },
+      'webAccessMaxCharsPerUrl': {
+        value: 15000,
+        type: SettingItemType.Int,
+        label: 'Web Access Max Chars Per URL',
+        description: 'Maximum number of characters to include per fetched URL (after HTML is converted to text).',
         public: false,
         section: 'chatgptToolkit',
       },
@@ -291,7 +324,7 @@ export async function registerPluginSettings(): Promise<void> {
         }
       } else {
         // Fallback to hardcoded default
-        await joplin.settings.setValue('openaiModel', 'gpt-5.1');
+        await joplin.settings.setValue('openaiModel', 'gpt-5.2');
         await joplin.settings.setValue('openaiModelUserSet', false);
       }
     }

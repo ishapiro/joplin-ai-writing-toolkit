@@ -37,6 +37,10 @@ export interface ChatGPTAPISettings {
   autoSave: boolean;
   reasoningEffort: string;
   verbosity: string;
+  webAccessEnabled: boolean;
+  webAccessAllowedDomains: string;
+  webAccessMaxUrls: number;
+  webAccessMaxCharsPerUrl: number;
 }
 
 export interface WebviewMessage {
@@ -53,20 +57,6 @@ export interface Note {
   title: string;
   body: string;
   parent_id?: string;
-}
-
-export interface ChatGPTResponse {
-  choices: Array<{
-    message: {
-      content: string;
-    };
-  }>;
-  usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-  model?: string;
 }
 
 // Interface for model data with metadata

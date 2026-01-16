@@ -155,7 +155,7 @@ export class PanelHandler {
         return { success: true, content: response };
       } else if (message.type === 'getCurrentModel') {
         // Return the current model setting
-        const currentModel = await joplin.settings.value('openaiModel') || 'gpt-5.1';
+        const currentModel = await joplin.settings.value('openaiModel') || 'gpt-5.2';
         return { success: true, model: currentModel };
       } else if (message.type === 'updateModel') {
         // Update the model setting

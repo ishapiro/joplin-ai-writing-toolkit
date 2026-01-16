@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="AI Writing Toolkit + PDF Publishing icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#1E3A8A"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#60A5FA"/>
+      <stop offset="1" stop-color="#34D399"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect x="40" y="40" width="432" height="432" rx="96" fill="url(#bg)"/>
+
+  <!-- Subtle glow -->
+  <path d="M120 140 C170 95, 250 85, 320 105 C390 125, 420 185, 408 240 C396 295, 340 330, 280 335 C220 340, 150 320, 120 275 C90 230, 85 175, 120 140 Z"
+        fill="#60A5FA" opacity="0.14"/>
+
+  <!-- Document (PDF) -->
+  <g filter="url(#shadow)">
+    <path d="M170 150 h140 l50 50 v180 a28 28 0 0 1-28 28 H170 a28 28 0 0 1-28-28 V178 a28 28 0 0 1 28-28 z"
+          fill="#FFFFFF" opacity="0.98"/>
+    <path d="M310 150 v50 a10 10 0 0 0 10 10 h50" fill="#E5E7EB"/>
+    <path d="M310 150 l50 50 h-40 a10 10 0 0 1-10-10 z" fill="#D1D5DB"/>
+  </g>
+
+  <!-- PDF badge -->
+  <g>
+    <rect x="182" y="305" width="148" height="54" rx="14" fill="url(#accent)"/>
+    <text x="256" y="342" text-anchor="middle"
+          font-family="Inter, Segoe UI, Arial, sans-serif"
+          font-size="26" font-weight="800" fill="#0B1220">PDF</text>
+  </g>
+
+  <!-- Pen + spark -->
+  <g>
+    <!-- Pen body -->
+    <path d="M214 248 L330 192 a18 18 0 0 1 24 8 l6 12 a18 18 0 0 1-8 24 L236 292 Z"
+          fill="#111827"/>
+    <path d="M220 260 L336 204" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="6" stroke-linecap="round"/>
+
+    <!-- Nib -->
+    <path d="M206 300 l34-16 12 24-34 16 z" fill="#111827"/>
+    <circle cx="229" cy="304" r="4.5" fill="#60A5FA"/>
+
+    <!-- Spark -->
+    <path d="M372 150 l10 22 22 10-22 10-10 22-10-22-22-10 22-10z"
+          fill="#93C5FD" opacity="0.95"/>
+  </g>
+</svg>
+

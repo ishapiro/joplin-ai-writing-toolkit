@@ -7,6 +7,10 @@ export function getOptionsDialogHtml(
     autoSave: boolean;
     reasoningEffort: string;
     verbosity: string;
+    webAccessEnabled: boolean;
+    webAccessAllowedDomains: string;
+    webAccessMaxUrls: number;
+    webAccessMaxCharsPerUrl: number;
     systemPromptFile: string;
     systemPromptContent: string;
     pluginVersion: string;
@@ -72,8 +76,8 @@ export function getOptionsDialogHtml(
             </div>
             <div class="form-group">
               <label class="input-label">Max Tokens</label>
-              <input type="number" id="maxTokens" name="maxTokens" class="text-input" value="${settings.maxTokens || 1000}" min="1" max="32000" step="1">
-              <div class="help-text">Maximum number of tokens to generate in responses</div>
+              <input type="number" id="maxTokens" name="maxTokens" class="text-input" value="${settings.maxTokens || 50000}" min="1" max="200000" step="1">
+              <div class="help-text">Maximum number of completion tokens to generate in responses</div>
             </div>
           </div>
 
@@ -102,6 +106,33 @@ export function getOptionsDialogHtml(
               <label for="autoSave" class="input-label" style="margin-bottom: 0;">Auto-save Changes</label>
             </div>
             <div class="help-text">Automatically save note changes after AI operations</div>
+          </div>
+
+          <div class="options-group">
+            <h4>Web Access (Optional)</h4>
+            <div class="checkbox-group">
+              <input type="checkbox" id="webAccessEnabled" name="webAccessEnabled" ${settings.webAccessEnabled ? 'checked' : ''}>
+              <label for="webAccessEnabled" class="input-label" style="margin-bottom: 0;">Enable fetching URLs from your prompt</label>
+            </div>
+            <div class="help-text">
+              When enabled, the plugin enables the OpenAI Responses API <code>web_search</code> tool so the model can open URLs you include in your prompt.
+              Use the allowlist below to constrain where the model is allowed to browse.
+            </div>
+            <div class="form-group" style="margin-top: 14px;">
+              <label class="input-label">Allowed Domains (optional allowlist)</label>
+              <textarea id="webAccessAllowedDomains" name="webAccessAllowedDomains" class="prompt-textarea" rows="4" placeholder="example.com&#10;*.wikipedia.org">${escapeHtml(settings.webAccessAllowedDomains || '')}</textarea>
+              <div class="help-text">Comma or newline separated. If blank, any public domain in your prompt may be fetched.</div>
+            </div>
+            <div class="form-group">
+              <label class="input-label">Max URLs per prompt</label>
+              <input type="number" id="webAccessMaxUrls" name="webAccessMaxUrls" class="text-input" value="${settings.webAccessMaxUrls || 3}" min="0" max="20" step="1">
+              <div class="help-text">0 disables fetching even if enabled.</div>
+            </div>
+            <div class="form-group">
+              <label class="input-label">Max characters per URL</label>
+              <input type="number" id="webAccessMaxCharsPerUrl" name="webAccessMaxCharsPerUrl" class="text-input" value="${settings.webAccessMaxCharsPerUrl || 15000}" min="1000" max="200000" step="500">
+              <div class="help-text">After HTML is converted to text, the content is truncated to this limit.</div>
+            </div>
           </div>
 
           <div class="options-group">
