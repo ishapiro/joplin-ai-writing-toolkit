@@ -1,29 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="440" height="280" viewBox="0 0 440 280" role="img" aria-label="AI Writing Toolkit + PDF Publishing promo tile">
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="280" viewBox="0 0 440 280" role="img" aria-label="AI Writing Toolkit + PDF Publishing promo tile"
+     color-interpolation="sRGB" color-interpolation-filters="sRGB">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0B1220"/>
-      <stop offset="1" stop-color="#1E3A8A"/>
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EFF6FF"/>
     </linearGradient>
     <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#60A5FA"/>
       <stop offset="1" stop-color="#34D399"/>
     </linearGradient>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.35"/>
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#0F172A" flood-opacity="0.16"/>
     </filter>
   </defs>
 
   <!-- Background -->
   <rect width="440" height="280" rx="26" fill="url(#bg)"/>
+  <rect x="1" y="1" width="438" height="278" rx="25" fill="none" stroke="#E2E8F0"/>
 
-  <!-- Decorative glow blobs -->
-  <circle cx="70" cy="60" r="90" fill="#60A5FA" opacity="0.18"/>
-  <circle cx="395" cy="230" r="120" fill="#34D399" opacity="0.14"/>
+  <!-- Subtle decorative shapes (low-contrast, behind content) -->
+  <circle cx="68" cy="54" r="86" fill="#DBEAFE" opacity="0.55"/>
+  <circle cx="392" cy="226" r="110" fill="#E0F2FE" opacity="0.55"/>
 
   <!-- Left icon container -->
   <g transform="translate(26,40)" filter="url(#shadow)">
-    <rect x="0" y="0" width="140" height="200" rx="22" fill="#0F172A" opacity="0.95"/>
-    <rect x="14" y="14" width="112" height="172" rx="18" fill="#111827" opacity="0.9" stroke="#334155"/>
+    <rect x="0" y="0" width="140" height="200" rx="22" fill="#FFFFFF" opacity="0.98" stroke="#E2E8F0"/>
+    <rect x="14" y="14" width="112" height="172" rx="18" fill="#F8FAFC" stroke="#E2E8F0"/>
 
     <!-- Document -->
     <path d="M44 44 h56 l20 20 v72 a14 14 0 0 1-14 14 H44 a14 14 0 0 1-14-14 V58 a14 14 0 0 1 14-14 z"
@@ -31,10 +33,15 @@
     <path d="M100 44 v20 a6 6 0 0 0 6 6 h20" fill="#E5E7EB"/>
     <path d="M100 44 l20 20 h-16 a4 4 0 0 1-4-4 z" fill="#D1D5DB"/>
 
-    <!-- Pen -->
-    <path d="M58 118 L116 90 a10 10 0 0 1 13 4 l3 6 a10 10 0 0 1-4 13 L70 141 Z"
-          fill="#111827"/>
-    <path d="M60 124 L118 96" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="4" stroke-linecap="round"/>
+    <!-- Wand -->
+    <path d="M62 142 L118 106"
+          stroke="#0B1220" stroke-width="10" stroke-linecap="round"/>
+    <path d="M64 142 L118 108"
+          stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="58" cy="146" r="5" fill="#0B1220"/>
+    <circle cx="58" cy="146" r="2.2" fill="#60A5FA" opacity="0.95"/>
+    <path d="M122 96 l6 12 12 6-12 6-6 12-6-12-12-6 12-6z"
+          fill="#93C5FD" opacity="0.95"/>
 
     <!-- PDF pill -->
     <rect x="38" y="154" width="84" height="26" rx="10" fill="url(#accent)"/>
@@ -48,20 +55,20 @@
     <text x="0" y="0"
           font-family="Inter, Segoe UI, Arial, sans-serif"
           font-size="22" font-weight="800"
-          fill="#FFFFFF">AI Writing Toolkit</text>
+          fill="#0F172A">AI Writing Toolkit</text>
     <text x="0" y="28"
           font-family="Inter, Segoe UI, Arial, sans-serif"
           font-size="22" font-weight="800"
-          fill="#93C5FD">+ PDF Publishing</text>
+          fill="#2563EB">+ PDF Publishing</text>
 
-    <rect x="0" y="44" width="220" height="2" fill="#334155"/>
+    <rect x="0" y="44" width="220" height="2" fill="#E2E8F0"/>
 
     <text x="0" y="78"
           font-family="Inter, Segoe UI, Arial, sans-serif"
           font-size="14" font-weight="600"
-          fill="#E5E7EB">Write with AI in Joplin</text>
+          fill="#0F172A">Write with AI in Joplin</text>
 
-    <g font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12" fill="#CBD5E1">
+    <g font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12" fill="#334155">
       <text x="0" y="106">• Chat + quick actions (append/replace/insert)</text>
       <text x="0" y="128">• Grammar fixes with review modal</text>
       <text x="0" y="150">• Title pages, headers/footers, pagination</text>
@@ -70,12 +77,12 @@
 
     <!-- Accent badge -->
     <g transform="translate(0,196)">
-      <rect x="0" y="0" width="230" height="36" rx="14" fill="#0F172A" opacity="0.9" stroke="#334155"/>
+      <rect x="0" y="0" width="230" height="36" rx="14" fill="#FFFFFF" opacity="0.98" stroke="#E2E8F0"/>
       <path d="M18 24 l6-16 6 16 16 6-16 6-6 16-6-16-16-6z" fill="#34D399" opacity="0.95"/>
       <text x="48" y="24"
             font-family="Inter, Segoe UI, Arial, sans-serif"
             font-size="12" font-weight="700"
-            fill="#E5E7EB">Front matter–driven publishing</text>
+            fill="#0F172A">Front matter–driven publishing</text>
     </g>
   </g>
 </svg>
