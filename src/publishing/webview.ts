@@ -170,10 +170,8 @@
       const printBtn = document.getElementById('printButton');
       if (printBtn) {
         printBtn.onclick = () => {
-          console.info('DEBUG: printButton clicked. Triggering window.print().');
-          // Show all pages for printing
-          showAllPagesForPrint();
-          window.print();
+          console.info('DEBUG: printButton clicked. Opening print dialog.');
+          (window as any).webviewApi.postMessage({ type: 'openPrintDialog' });
         };
       }
 
@@ -183,12 +181,8 @@
       const nextBtn = document.getElementById('nextPage');
       if (nextBtn) nextBtn.onclick = () => changePage(1);
 
-      // Reset print state after dialog closes (Strategy B from Electron docs)
-      // Per user request: Return to settings panel after print instead of refreshing preview
-      window.onafterprint = () => {
-        console.info('DEBUG: Afterprint event detected. Returning to settings.');
-        (window as any).webviewApi.postMessage({ type: 'closePreview' });
-      };
+      // Note: Printing is handled in a dedicated dialog window to avoid
+      // blocking the main Joplin window's renderer thread.
     }
   }
 

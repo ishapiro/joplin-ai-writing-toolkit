@@ -45,10 +45,20 @@ export function getPanelHtml(modelOptions: string): string {
           rows="5"
         ></textarea>
       </div>
-      <div class="send-button-container">
-        <button class="close-panel-button" id="closePanelButton">Close</button>
-        <button class="clear-history-button" id="clearHistoryButton">Clear History</button>
-        <button class="send-button" id="sendButton">Send</button>
+      <div class="footer">
+        <div class="send-button-container">
+          <button class="close-panel-button" id="closePanelButton">Close</button>
+          <button class="clear-history-button" id="clearHistoryButton">Clear History</button>
+          <button class="send-with-note-button" id="sendWithNoteButton" title="Send prompt plus the current note">
+            Send with Note
+          </button>
+          <button class="send-button" id="sendButton">Send</button>
+        </div>
+        <div class="footer-stats">
+          <span class="history-stats" id="historyStats" title="Estimated history context usage">
+            History: 0 | Free: 0
+          </span>
+        </div>
       </div>
     </div>
 
@@ -398,12 +408,28 @@ export function getPanelHtml(modelOptions: string): string {
         box-shadow: 0 0 0 2px rgba(74, 74, 74, 0.1);
       }
 
+      .footer {
+        flex-shrink: 0;
+        background: #ffffff;
+        padding: 0 16px 16px;
+      }
+
       .send-button-container {
         display: flex;
-        justify-content: space-between;
+        flex-wrap: wrap;
+        align-items: stretch;
         gap: 10px;
-        padding: 0 16px 16px;
-        background: #ffffff;
+      }
+
+      /* Make all footer buttons the same height, with room for two lines */
+      .send-button-container button {
+        min-height: 52px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        white-space: normal;
+        line-height: 1.2;
       }
 
       .send-button {
@@ -434,6 +460,39 @@ export function getPanelHtml(modelOptions: string): string {
         transform: none;
       }
 
+      .send-with-note-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 24px;
+        background: #4a4a4a;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 14px;
+      }
+
+      .send-with-note-button:hover {
+        background: #3a3a3a;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      .send-with-note-button:active {
+        transform: translateY(0);
+      }
+
+      .send-with-note-button:disabled {
+        background: #cccccc;
+        color: white;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
       .close-panel-button, .clear-history-button {
         padding: 8px 16px;
         background: transparent;
@@ -449,6 +508,17 @@ export function getPanelHtml(modelOptions: string): string {
         background: #f5f5f5;
         color: #333;
         border-color: #999;
+      }
+
+      .footer-stats {
+        margin-top: 8px;
+      }
+
+      .history-stats {
+        font-size: 12px;
+        color: #666;
+        white-space: nowrap;
+        user-select: none;
       }
       
       .error {

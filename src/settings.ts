@@ -66,7 +66,19 @@ export async function registerPluginSettings(): Promise<void> {
   }
   
   // Create a settings section so options appear in Joplin's UI
-  const pluginVersion = 'Beta 1.0';
+  // Use the packaged manifest version so this stays in sync with releases.
+  let pluginVersion = 'Unknown';
+  try {
+    const path = require('path');
+    const fs = require('fs');
+    const installDir = await joplin.plugins.installationDir();
+    const manifestPath = path.join(installDir, 'manifest.json');
+    const manifestJson = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    if (manifestJson && manifestJson.version) pluginVersion = String(manifestJson.version);
+  } catch (e: any) {
+    console.warn('Could not read plugin version from manifest.json:', e?.message || e);
+  }
+
   const loadTimestamp = new Date().toLocaleString();
   await joplin.settings.registerSection('chatgptToolkit', {
     label: 'AI Writing Toolkit',

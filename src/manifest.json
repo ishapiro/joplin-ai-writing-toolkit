@@ -2,15 +2,20 @@
 	"manifest_version": 1,
 	"id": "com.cogitations.ai-writing-toolkit",
 	"app_min_version": "3.4",
-	"version": "1.0.0-beta",
+	"version": "1.0.1",
 	"name": "AI Writing Toolkit + PDF Publishing",
-	"description": "AI chat and grammar improvements inside Joplin, with a full PDF Publishing workflow: per-note front matter settings, title pages, headers/footers, pagination, and reliable print preview (including attachment images).",
+	"description": "Deeply integrated AI for Joplin: chat, rewriting, research and grammar tools that work directly with your notes (send prompts with note context, insert/append/replace results). Includes a sophisticated PDF publishing workflow to turn notes into beautiful documents—per-note front matter settings, title pages, headers/footers, pagination, and reliable print preview (including attachment images).",
 	"author": "Irv Shapiro",
 	"homepage_url": "https://cogitations.com",
 	"repository_url": "https://github.com/ishapiro/joplin-ai-writing-toolkit",
 	"keywords": [],
 	"categories": ["productivity", "editor"],
-	"screenshots": [],
+	"screenshots": [
+		{ "src": "ScreenShot-1-Sumarize.png" },
+		{ "src": "ScreenShot-2-Cogitations-Menu.png" },
+		{ "src": "Screenshot-3-PDF-Settings.png" },
+		{ "src": "Screenshot-4-PDF-Preview.png" }
+	],
 	"icons": {
 		"48": "icon-48.png",
 		"128": "icon-128.png"

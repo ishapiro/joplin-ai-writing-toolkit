@@ -8,6 +8,8 @@
   const chatMessages = document.getElementById('chatMessages');
   const chatInput = document.getElementById('chatInput') as HTMLTextAreaElement;
   const sendButton = document.getElementById('sendButton') as HTMLButtonElement;
+  const sendWithNoteButton = document.getElementById('sendWithNoteButton') as (HTMLButtonElement | null);
+  const historyStats = document.getElementById('historyStats') as (HTMLSpanElement | null);
   const loading = document.getElementById('loading');
 
   // Simple markdown parser for basic formatting
@@ -126,6 +128,9 @@
 
   // Click to send
   sendButton.addEventListener('click', () => sendMessage());
+  if (sendWithNoteButton) {
+    sendWithNoteButton.addEventListener('click', () => sendMessageWithNote());
+  }
 
   // Clear history button
   const clearHistoryButton = document.getElementById('clearHistoryButton');
@@ -139,6 +144,7 @@
         
         // Clear the chat window visually
         clearChatWindow();
+        refreshHistoryStats();
         
         console.log('History cleared successfully');
       } catch (error: any) {
@@ -233,6 +239,12 @@
     }
   }
 
+  function setSendingState(isSending: boolean) {
+    showLoading(isSending);
+    sendButton.disabled = isSending;
+    if (sendWithNoteButton) sendWithNoteButton.disabled = isSending;
+  }
+
   function clearChatWindow() {
     // Clear all messages from the chat window
     if (chatMessages) {
@@ -240,6 +252,27 @@
       
       // Add a welcome message to indicate the chat is cleared
       addMessage('system', 'Chat history cleared. Start a new conversation!');
+    }
+  }
+
+  function fmtCompact(n: number): string {
+    if (!Number.isFinite(n)) return '0';
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}m`;
+    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+    return String(Math.max(0, Math.floor(n)));
+  }
+
+  async function refreshHistoryStats() {
+    if (!historyStats) return;
+    try {
+      const resp = await webviewApi.postMessage({ type: 'getHistoryStats' });
+      const stats = resp?.stats;
+      const messages = Number(stats?.messages || 0) || 0;
+      const historyTokens = Number(stats?.historyTokens || 0) || 0;
+      const freeTokens = Number(stats?.freeTokens || 0) || 0;
+      historyStats.textContent = `History: ${messages} msgs (~${fmtCompact(historyTokens)} tok) | Free: ~${fmtCompact(freeTokens)} tok`;
+    } catch (e) {
+      // Non-fatal; leave whatever was already rendered
     }
   }
 
@@ -251,8 +284,7 @@
     chatInput.value = '';
     chatInput.style.height = 'auto';
 
-    showLoading(true);
-    sendButton.disabled = true;
+    setSendingState(true);
 
     try {
       // Send message to ChatGPT via plugin using webviewApi
@@ -269,9 +301,39 @@
     } catch (error: any) {
       addError('Error: ' + (error && error.message ? error.message : String(error)));
     } finally {
-      showLoading(false);
-      sendButton.disabled = false;
+      setSendingState(false);
       chatInput.focus();
+      refreshHistoryStats();
+    }
+  }
+
+  async function sendMessageWithNote() {
+    const message = chatInput.value.trim();
+    if (!message) return;
+
+    addMessage('user', message);
+    chatInput.value = '';
+    chatInput.style.height = 'auto';
+
+    setSendingState(true);
+
+    try {
+      const response = await webviewApi.postMessage({
+        type: 'sendChatMessageWithNote',
+        message: message,
+      });
+
+      if (response && response.success) {
+        addMessage('assistant', response.content);
+      } else {
+        addError('Error: ' + (response?.error || 'Failed to get response from ChatGPT'));
+      }
+    } catch (error: any) {
+      addError('Error: ' + (error && error.message ? error.message : String(error)));
+    } finally {
+      setSendingState(false);
+      chatInput.focus();
+      refreshHistoryStats();
     }
   }
 
@@ -346,6 +408,9 @@
       console.info('Message received but no type:', actualMessage);
     }
   });
+
+  // Initialize footer stats
+  refreshHistoryStats();
 
   // Function to show a nicely formatted close message
   function showCloseMessage() {

@@ -702,6 +702,30 @@ Always optimize your responses so they are immediately useful to a busy executiv
     console.info(`[ChatGPT API] Conversation history cleared`);
   }
 
+  public getHistoryStats(): {
+    messages: number;
+    historyTokens: number;
+    maxHistoryTokens: number;
+    freeTokens: number;
+  } {
+    const maxTokens = Number((this.settings as any)?.maxTokens || 0) || 0;
+    const maxHistoryTokens = Math.floor((maxTokens * 3) / 4);
+
+    let historyTokens = 0;
+    for (const m of this.conversationHistory) {
+      historyTokens += this.estimateTokens(m.content || '');
+    }
+
+    const freeTokens = Math.max(0, maxHistoryTokens - historyTokens);
+
+    return {
+      messages: this.conversationHistory.length,
+      historyTokens,
+      maxHistoryTokens,
+      freeTokens,
+    };
+  }
+
   // Validate API key format
   private validateApiKey(apiKey: string): boolean {
     if (!apiKey || typeof apiKey !== 'string') {
@@ -971,7 +995,7 @@ Always optimize your responses so they are immediately useful to a busy executiv
       ];
       
       // If history gets too large, summarize it via OpenAI and replace it with the summary.
-      const maxHistoryTokensForRequest = Math.floor(this.settings.maxTokens / 2);
+      const maxHistoryTokensForRequest = Math.floor((this.settings.maxTokens * 3) / 4);
       await this.summarizeAndReplaceHistoryIfNeeded(maxHistoryTokensForRequest);
 
       // Add conversation history, but limit to 1/2 of max tokens
@@ -993,8 +1017,8 @@ Always optimize your responses so they are immediately useful to a busy executiv
       this.conversationHistory.push({ role: 'user', content: userMessage });
       this.conversationHistory.push({ role: 'assistant', content: content });
       
-      // Trim history to stay within token limits (keep it under 1/2 of max tokens)
-      const maxHistoryTokensForStorage = Math.floor(this.settings.maxTokens / 2);
+      // Trim history to stay within token limits (keep it under 3/4 of max tokens)
+      const maxHistoryTokensForStorage = Math.floor((this.settings.maxTokens * 3) / 4);
       await this.summarizeAndReplaceHistoryIfNeeded(maxHistoryTokensForStorage);
       this.trimHistoryToTokenLimit(maxHistoryTokensForStorage);
       

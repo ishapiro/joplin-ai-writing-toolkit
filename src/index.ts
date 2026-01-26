@@ -7,6 +7,7 @@ import { parseFrontMatter, updateFrontMatter, webviewToPluginSettings, pluginToW
 import { generatePreviewHtml } from './publishing/preview';
 import { getOptionsDialogHtml } from './optionsDialog';
 import { getPreviewPanelHtml } from './publishing/previewPanel';
+import { getPrintDialogHtml } from './publishing/printDialog';
 import { PanelHandler } from './handlers';
 import { MenuItemLocation } from './types';
 import { 
@@ -66,7 +67,7 @@ joplin.plugins.register({
         if (!looksLikeRealOpenAIApiKey(apiKey)) {
           // Show on every app start until a real-looking key is set.
           await joplin.views.dialogs.showMessageBox(
-            'AI Writing Toolkit needs an OpenAI API key to work.\n\n' +
+            'The AI Writing Toolkit needs an OpenAI API key to work.\n\n' +
             'Configure it here:\n' +
             'Tools > Cogitations Plugins > Options\n\n' +
             'Get an API key from:\n' +
@@ -82,8 +83,10 @@ joplin.plugins.register({
       let chatHandler: PanelHandler | null = null;
       let publishingPanel: any = null;
       let isPreviewMode = false;
+      let lastPreviewHtml: string | null = null;
       let modelOptions: string = '';
       let optionsDialog: any = null;
+      let printDialog: any = null;
       
       // Lazy initialization function for Chat Panel
       const ensureChatPanel = async () => {
@@ -277,6 +280,7 @@ joplin.plugins.register({
                 const pluginSettings = await resolvePublishingSettingsForPreview(webviewToPluginSettings(settings));
                 const previewHtmlRaw = generatePreviewHtml(note.body, note.title, pluginSettings);
                 const previewHtml = await resolveJoplinResourceUrlsInHtml(previewHtmlRaw);
+                lastPreviewHtml = previewHtml;
                 await joplin.views.panels.setHtml(publishingPanel, getPreviewPanelHtml(previewHtml));
               } catch (error) {
                 console.error('DEBUG: Error refreshing preview:', error);
@@ -300,6 +304,7 @@ joplin.plugins.register({
                 const previewHtmlRaw = generatePreviewHtml(note.body, note.title, pluginSettings);
                 const previewHtml = await resolveJoplinResourceUrlsInHtml(previewHtmlRaw);
                 isPreviewMode = true;
+                lastPreviewHtml = previewHtml;
                 
                 const chatPanelInstance = await ensureChatPanel();
                 console.info('DEBUG: Hiding AI panel before preview.');
@@ -310,6 +315,30 @@ joplin.plugins.register({
                 await joplin.views.panels.show(publishingPanel);
               } catch (error) {
                 console.error('DEBUG: Error generating preview:', error);
+              }
+            } else if (message.type === 'openPrintDialog') {
+              try {
+                if (!lastPreviewHtml) {
+                  await joplin.views.dialogs.showMessageBox('No preview is available to print yet. Click Preview first.');
+                  return;
+                }
+
+                if (!printDialog) {
+                  printDialog = await joplin.views.dialogs.create('publishingPrintDialog');
+                  // Load dialog JS (inline <script> is not reliably executed in Joplin dialogs)
+                  await joplin.views.dialogs.addScript(printDialog, './publishing/printDialogWebview.js');
+                  await joplin.views.dialogs.setButtons(printDialog, [
+                    { id: 'cancel', title: 'Close' },
+                  ]);
+                  // Keep this dialog small (status-only UI). The content to print is offscreen.
+                  await joplin.views.dialogs.setFitToContent(printDialog, true);
+                }
+
+                await joplin.views.dialogs.setHtml(printDialog, getPrintDialogHtml(lastPreviewHtml));
+                await joplin.views.dialogs.open(printDialog);
+              } catch (error: any) {
+                console.error('DEBUG: Error opening print dialog:', error);
+                await joplin.views.dialogs.showMessageBox(`Error opening print dialog: ${error?.message ?? String(error)}`);
               }
             } else if (message.type === 'updateNoteMetadata') {
               try {

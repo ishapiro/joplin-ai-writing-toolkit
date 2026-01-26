@@ -19,7 +19,6 @@ md.renderer.rules.fence = (tokens, idx, options, env, self) => {
   if (info === 'note') {
     return `
       <div class="note-box">
-        <div class="note-icon">📝</div>
         <div class="note-content">${md.render(token.content)}</div>
       </div>
     `;
@@ -111,10 +110,8 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
       border-left: 4px solid #333;
       padding: 10px 15px;
       margin: 10px 0;
-      display: flex;
-      gap: 10px;
+      display: block;
     }
-    .note-icon { font-size: 20px; }
     .note-content { flex: 1; }
     .note-content p:first-child { margin-top: 0; }
     .note-content p:last-child { margin-bottom: 0; }

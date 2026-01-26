@@ -174,6 +174,42 @@ export class PanelHandler {
         const response = await this.chatGPTAPI.sendMessage(message.message || '');
         this.lastChatGPTResponse = response; // Store for later use
         return { success: true, content: response };
+      } else if (message.type === 'sendChatMessageWithNote') {
+        const userInstructions = String(message.message || '').trim();
+        const currentNote = await getCurrentNote();
+        const noteBody = String(currentNote?.body || '');
+
+        const combinedPrompt =
+          `${userInstructions}\n\n` +
+          `Apply the above instructions to this note.\n\n` +
+          `${noteBody}`;
+
+        // Warn if prompt includes URLs but web retrieval is disabled
+        try {
+          const hasUrl = /https?:\/\/[^\s<>()\]\}]+/i.test(combinedPrompt);
+          if (hasUrl) {
+            const webAccessEnabled = (await joplin.settings.value('webAccessEnabled')) === true;
+            if (!webAccessEnabled) {
+              await joplin.views.panels.postMessage(this.panel, {
+                type: 'addMessage',
+                sender: 'system',
+                content:
+                  'Heads up: your prompt includes a URL, but **Web Access** is currently disabled. ' +
+                  'Enable it in `Tools > Cogitations Plugins > Options > Web Access (Optional)` if you want the AI to open links.',
+              });
+            }
+          }
+        } catch (warnError: any) {
+          // Non-fatal: don't block sending if warning logic fails
+          console.warn('URL/web access warning failed:', warnError?.message || warnError);
+        }
+
+        const response = await this.chatGPTAPI.sendMessage(combinedPrompt);
+        this.lastChatGPTResponse = response; // Store for later use
+        return { success: true, content: response };
+      } else if (message.type === 'getHistoryStats') {
+        const stats = (this.chatGPTAPI as any).getHistoryStats?.();
+        return { success: true, stats };
       } else if (message.type === 'getCurrentModel') {
         // Return the current model setting
         const currentModel = await joplin.settings.value('openaiModel') || 'gpt-5.2';
