@@ -1,5 +1,5 @@
 // AI Writing Toolkit Plugin - TypeScript Implementation
-import { ChatGPTAPI, ensureModelsFetchedAndGetOptions } from './api';
+import { ChatGPTAPI, ensureModelsFetchedAndGetOptions, fetchAvailableModels } from './api';
 import { registerPluginSettings } from './settings';
 import { getPanelHtml } from './panel';
 import { getPublishingPanelHtml } from './publishing/panel';
@@ -515,15 +515,75 @@ joplin.plugins.register({
             
             // Open dialog and wait for result
             const result = await joplin.views.dialogs.open(optionsDialog);
-            
+
             // Handle result - formData contains all form values when Save is clicked
             if (result.id === 'submit' && result.formData) {
               // Joplin may nest form data by form name
               const formData = (result.formData as any).optionsForm ?? result.formData;
-              
+
+              // --- Validate API key with OpenAI and ensure a valid model ---
+              const newApiKeyRaw = String(formData.openaiApiKey || '');
+              const newApiKey = newApiKeyRaw.trim();
+              const previousApiKeyRaw = (await joplin.settings.value('openaiApiKey')) || '';
+              const previousApiKey = String(previousApiKeyRaw || '').trim();
+
+              let validatedModels: any[] | null = null;
+              let selectedModel = String(formData.openaiModel || '').trim();
+
+              if (newApiKey) {
+                // Only hit the network when the key actually changed or when we don't have a model yet.
+                const shouldValidate = newApiKey !== previousApiKey || !selectedModel;
+                if (shouldValidate) {
+                  try {
+                    const models = await fetchAvailableModels(newApiKey);
+                    if (!models || !models.length) {
+                      await joplin.views.dialogs.showMessageBox(
+                        'The OpenAI API key could not be validated.\n\n' +
+                        'OpenAI returned no accessible models for this key. ' +
+                        'Please double‑check the key and your internet connection, then try again.'
+                      );
+                      // Do not save any changes if we cannot verify the key.
+                      return;
+                    }
+                    validatedModels = models;
+
+                    // Persist model list for later use (history stats, dropdowns, etc.)
+                    try {
+                      await joplin.settings.setValue('modelCache', JSON.stringify(models));
+                    } catch (cacheError: any) {
+                      console.warn('Failed to cache OpenAI models:', cacheError?.message || cacheError);
+                    }
+
+                    // If user left the model empty or picked an invalid one, auto-select a valid default.
+                    const modelIds = models.map((m: any) => m.id);
+                    const isGeneralModel = (id: string): boolean => {
+                      const gptPattern = /^gpt-\d+(\.\d+)?[a-z]?$/;
+                      const oPattern = /^o\d+$/;
+                      if (id.includes('-') && !id.match(/^gpt-\d+(\.\d+)?[a-z]?$/)) {
+                        return false;
+                      }
+                      return gptPattern.test(id) || oPattern.test(id);
+                    };
+
+                    if (!selectedModel || !modelIds.includes(selectedModel)) {
+                      const latestGeneral = models.find((m: any) => isGeneralModel(m.id));
+                      selectedModel = latestGeneral ? latestGeneral.id : models[0].id;
+                      console.info('Auto-selected OpenAI model for user:', selectedModel);
+                    }
+                  } catch (validationError: any) {
+                    console.error('Error validating OpenAI API key:', validationError);
+                    await joplin.views.dialogs.showMessageBox(
+                      'There was an error contacting the OpenAI API. ' +
+                      'Please verify your network connection and API key, then try again.'
+                    );
+                    return;
+                  }
+                }
+              }
+
               // Save all settings using the same storage mechanism
-              await joplin.settings.setValue('openaiApiKey', formData.openaiApiKey || '');
-              await joplin.settings.setValue('openaiModel', formData.openaiModel || '');
+              await joplin.settings.setValue('openaiApiKey', newApiKey);
+              await joplin.settings.setValue('openaiModel', selectedModel);
               await joplin.settings.setValue('maxTokens', parseInt(formData.maxTokens) || 50000);
               // Checkbox: 'on' when checked, undefined when unchecked
               await joplin.settings.setValue('autoSave', formData.autoSave === 'on' || formData.autoSave === true || formData.autoSave === 'true');
