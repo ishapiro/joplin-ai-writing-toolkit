@@ -4,8 +4,6 @@
 
 Are you a writer, consultant, or professional who needs to create polished PDF documents from your notes? The **AI Writers Toolkit + PDF Publishing** plugin transforms Joplin from a note-taking app into a powerful document creation and publishing platform.
 
-**Version 1.0.2 has significant installation updates.**
-
 ## 🎯 Perfect For
 
 - **Writers** creating manuscripts, articles, and reports
@@ -67,6 +65,12 @@ All PDF settings are stored in YAML Front Matter at the top of your notes:
 3. Search for **"AI Writers Toolkit + PDF Publishing"**
 4. Click **Install**
 5. Enter your OpenAI API key in **Tools > Cogitations Plugins > Cogitations Options**
+
+**Version 1.0.2**
+
+Note: The Joplin plugin website may not always reflect the latest version right away, but the plugin repository is kept up to date. 
+
+Version 1.0.2—with important bug fixes—is already available in the repository. The previous version (1.0.1) was listed as "AI Writing Toolkit + PDF Publishing," so you can search for either "AI Writers Toolkit + PDF Publishing" or "AI Writing Toolkit + PDF Publishing" to find and install the latest version.
 
 ## 💡 Quick Start
 
