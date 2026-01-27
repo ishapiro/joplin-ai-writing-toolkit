@@ -87,6 +87,9 @@ Version 1.0.2—with important bug fixes—is already available in the repositor
 - **GitHub Repository**: [View Source & Contribute](https://github.com/ishapiro/joplin-ai-writing-toolkit)
 - **Author**: [Irv Shapiro](https://cogitations.com)
 
+## Contact me with Feature Requests
+
+Send feature requests to ishapiro at cogitations dot com.
 
 ---
 
