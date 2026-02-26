@@ -1,11 +1,37 @@
 import * as MarkdownIt from 'markdown-it';
 import { PublishingSettings } from './utils';
 
-// Initialize markdown-it with HTML support
+// Use CommonJS require to keep typings simple and avoid TS property errors
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const hljs: any = require('highlight.js');
+
+function escapeHtml(code: string): string {
+  return code
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Initialize markdown-it with HTML support and syntax highlighting
 const md = new MarkdownIt({
   html: true,
   breaks: true,
   linkify: true,
+  highlight: (code: string, lang: string) => {
+    if (lang && hljs.getLanguage && hljs.getLanguage(lang)) {
+      try {
+        const highlighted = hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
+        return `<pre class="hljs"><code>${highlighted}</code></pre>`;
+      } catch (error) {
+        // Fallback to escaped code below
+      }
+    }
+
+    const escaped = escapeHtml(code);
+    return `<pre class="hljs"><code>${escaped}</code></pre>`;
+  },
 });
 
 /**
@@ -92,7 +118,7 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
 
     #contentSource { display: none; }
 
-    @media print {
+   @media print {
       .preview-page { background: none; margin: 0; }
       .virtual-page {
         box-shadow: none;
@@ -116,6 +142,60 @@ export function generatePreviewHtml(noteBody: string, noteTitle: string, setting
     .note-content p:first-child { margin-top: 0; }
     .note-content p:last-child { margin-bottom: 0; }
     
+    /* Code block & inline code styling */
+    pre,
+    code {
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      tab-size: 4;
+      -moz-tab-size: 4;
+    }
+    pre {
+      background: #f6f8fa;
+      color: #24292e;
+      padding: 10px 12px;
+      border-radius: 4px;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+    pre code {
+      background: transparent;
+      color: inherit;
+      font-size: 0.9em;
+    }
+
+    /* Minimal highlight.js-inspired theme for code coloring */
+    .hljs-comment,
+    .hljs-quote {
+      color: #6a737d;
+      font-style: italic;
+    }
+    .hljs-keyword,
+    .hljs-selector-tag,
+    .hljs-subst {
+      color: #d73a49;
+    }
+    .hljs-literal,
+    .hljs-number,
+    .hljs-tag .hljs-attr {
+      color: #005cc5;
+    }
+    .hljs-string,
+    .hljs-doctag,
+    .hljs-regexp {
+      color: #032f62;
+    }
+    .hljs-title,
+    .hljs-section {
+      color: #6f42c1;
+    }
+    .hljs-attr,
+    .hljs-attribute,
+    .hljs-variable,
+    .hljs-template-variable,
+    .hljs-type {
+      color: #005cc5;
+    }
+
     /* Shared footer/header styles */
     .page-header, .page-footer {
       position: absolute;

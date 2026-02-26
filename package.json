@@ -1,6 +1,6 @@
 {
   "name": "joplin-plugin-ai-writing-toolkit",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "scripts": {
     "build": "webpack --env joplin-plugin-config=buildMain && webpack --env joplin-plugin-config=buildExtraScripts && webpack --env joplin-plugin-config=createArchive",
     "install-plugin": "node install-plugin.js",
@@ -32,6 +32,7 @@
   "dependencies": {
     "@types/js-yaml": "^4.0.9",
     "js-yaml": "^4.1.1",
-    "markdown-it": "^14.1.0"
+    "markdown-it": "^14.1.0",
+    "highlight.js": "^11.11.1"
   }
 }
