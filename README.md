@@ -9,6 +9,8 @@ In summary, the Joplin AI Writing Toolkit transforms Joplin from just a note tak
 
 ## Release Notes
 
+- **1.2.0**: Version bump.
+
 - **1.1.0**: Enhanced PDF publishing with syntax-colored code blocks in PDF output, and adjusted code indentation for better readability.
 
 - **1.0.1**: Initial release of the AI Writing Toolkit + PDF Publishing plugin.
