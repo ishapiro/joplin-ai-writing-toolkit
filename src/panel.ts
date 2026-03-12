@@ -18,8 +18,9 @@ export function getPanelHtml(modelOptions: string): string {
         <button class="action-button" data-action="replaceNote" title="Replace Note with Reply">🔄 Replace</button>
         <button class="action-button" data-action="insertAtCursor" title="Insert Reply at Cursor">📍 Insert</button>
         <button class="action-button" data-action="createNewNote" title="New Note from Reply">📄 New Note</button>
+        <button class="action-button" data-action="copyLastReply" title="Copy last AI reply to clipboard">📋 Copy Reply</button>
         <button class="action-button" data-action="copyNoteToPrompt" title="Copy Note to Prompt">📋 Note→Prompt</button>
-        <button class="action-button" data-action="copySelectedToPrompt" title="Copy Selected to Prompt">✂️ Selected→Prompt</button>
+        <button class="action-button" data-action="copySelectedToPrompt" title="Copy Selected to Prompt">✂️ Sel→Prompt</button>
         <button class="action-button" data-action="checkGrammar" title="Check Selected Grammar">✅ Grammar</button>
         <button class="action-button" data-action="showAbout" title="Help">ℹ️ Help</button>
       </div>
@@ -77,8 +78,9 @@ export function getPanelHtml(modelOptions: string): string {
             <li><strong>🔄 Replace</strong> - Replaces the note with the AI response.</li>
             <li><strong>📍 Insert</strong> - Inserts response at cursor position.</li>
             <li><strong>📄 New Note</strong> - Creates a new note with the response.</li>
+            <li><strong>📋 Copy Reply</strong> - Copies the last AI reply to clipboard.</li>
             <li><strong>📋 Note→Prompt</strong> - Copies note to chat prompt.</li>
-            <li><strong>✂️ Selected→Prompt</strong> - Copies selected text to prompt.</li>
+            <li><strong>✂️ Sel→Prompt</strong> - Copies selected text to prompt.</li>
             <li><strong>✅ Grammar</strong> - Checks grammar of selected text.</li>
           </ul>
 
@@ -188,7 +190,7 @@ export function getPanelHtml(modelOptions: string): string {
 
       .quick-actions {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 4px;
         padding: 8px;
         background: #f5f5f5;

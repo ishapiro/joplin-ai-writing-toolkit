@@ -40,6 +40,9 @@
     return;
   }
 
+  // Track the most recent AI response for the "Copy Reply" button
+  let lastResponseContent = '';
+
   // Bind action buttons
   document.querySelectorAll('.action-button').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -47,6 +50,21 @@
       if (action === 'showAbout') {
         const modal = document.getElementById('ai-help-modal');
         if (modal) modal.style.display = 'block';
+      } else if (action === 'copyLastReply') {
+        if (!lastResponseContent) {
+          btn.innerHTML = '⚠️ No reply';
+          setTimeout(() => { btn.innerHTML = '📋 Copy Reply'; }, 2000);
+          return;
+        }
+        navigator.clipboard.writeText(lastResponseContent)
+          .then(() => {
+            btn.innerHTML = '✅ Copied!';
+            setTimeout(() => { btn.innerHTML = '📋 Copy Reply'; }, 2000);
+          })
+          .catch(() => {
+            btn.innerHTML = '❌ Failed';
+            setTimeout(() => { btn.innerHTML = '📋 Copy Reply'; }, 2000);
+          });
       } else if (action) {
         executeAction(action);
       }
@@ -175,6 +193,11 @@
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message ' + sender;
     
+    // Track the latest assistant response for the top-panel Copy Reply button
+    if (sender === 'assistant') {
+      lastResponseContent = content;
+    }
+
     // Create message header with copy button for assistant messages
     if (sender === 'assistant') {
       const messageHeader = document.createElement('div');

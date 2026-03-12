@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"\\\\\\\\wsl.localhost\\\\Ubuntu-22.04\\\\home\\\\irvshapiro\\\\drvax_code\\\\joplin-ai-writing-toolkit\")"
+    ]
+  }
+}
