@@ -423,19 +423,16 @@ export function getPanelHtml(modelOptions: string): string {
         gap: 10px;
       }
 
-      /* Make all footer buttons the same height, with room for two lines */
+      /* Unified style for all footer buttons */
       .send-button-container button {
-        min-height: 52px;
+        min-height: 32px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         text-align: center;
         white-space: normal;
         line-height: 1.2;
-      }
-
-      .send-button {
-        padding: 8px 24px;
+        padding: 5px 12px;
         background: #2c2c2c;
         color: white;
         border: none;
@@ -443,73 +440,24 @@ export function getPanelHtml(modelOptions: string): string {
         font-weight: 600;
         cursor: pointer;
         transition: all 0.2s ease;
-        font-size: 14px;
+        font-size: 12px;
       }
 
-      .send-button:hover {
+      .send-button-container button:hover {
         background: #000000;
         transform: translateY(-1px);
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       }
 
-      .send-button:active {
-        transform: translateY(0);
-      }
-      
-      .send-button:disabled {
-        background: #cccccc;
-        cursor: not-allowed;
-        transform: none;
-      }
-
-      .send-with-note-button {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 24px;
-        background: #4a4a4a;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-size: 14px;
-      }
-
-      .send-with-note-button:hover {
-        background: #3a3a3a;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      }
-
-      .send-with-note-button:active {
+      .send-button-container button:active {
         transform: translateY(0);
       }
 
-      .send-with-note-button:disabled {
+      .send-button-container button:disabled {
         background: #cccccc;
-        color: white;
         cursor: not-allowed;
         transform: none;
         box-shadow: none;
-      }
-
-      .close-panel-button, .clear-history-button {
-        padding: 8px 16px;
-        background: transparent;
-        color: #666;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        font-size: 13px;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-
-      .close-panel-button:hover, .clear-history-button:hover {
-        background: #f5f5f5;
-        color: #333;
-        border-color: #999;
       }
 
       .footer-stats {
