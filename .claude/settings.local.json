@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(ls \"\\\\\\\\wsl.localhost\\\\Ubuntu-22.04\\\\home\\\\irvshapiro\\\\drvax_code\\\\joplin-ai-writing-toolkit\")",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(find /home/irvshapiro/drvax_code/joplin-ai-writing-toolkit/src -type f \\\\\\(-name *.html -o -name *.css -o -name *.js -o -name *.ts -o -name *.tsx -o -name *.jsx \\\\\\))"
     ]
   }
 }
